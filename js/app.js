@@ -139,16 +139,17 @@ async function arrancar() {
   }
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
-    navigator.serviceWorker.register('sw.js').then(async () => {
-      // El service worker añade COOP/COEP: una sola recarga deja la página aislada y la IA puede usar varios hilos.
-      await navigator.serviceWorker.ready;
+    // El service worker añade COOP/COEP: una sola recarga deja la página aislada y la IA puede usar varios hilos.
+    const aislar = () => {
       let recargado = false;
       try { recargado = sessionStorage.getItem('crm-coi') === '1'; } catch {}
-      if (!self.crossOriginIsolated && navigator.serviceWorker.controller && !recargado && estadoIA().fase === 'apagada') {
+      if (!self.crossOriginIsolated && navigator.serviceWorker.controller && !recargado && estadoIA().fase === 'apagada' && !document.querySelector('dialog[open]')) {
         try { sessionStorage.setItem('crm-coi', '1'); } catch {}
         location.reload();
       }
-    }).catch(() => {});
+    };
+    navigator.serviceWorker.addEventListener('controllerchange', aislar);
+    navigator.serviceWorker.register('sw.js').then(() => navigator.serviceWorker.ready).then(aislar).catch(() => {});
   }
   if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
 }
