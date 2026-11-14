@@ -1,0 +1,7 @@
+node_modules/
+*.gguf
+.DS_Store
+Thumbs.db
+.claude/
+_site/
+*.log
