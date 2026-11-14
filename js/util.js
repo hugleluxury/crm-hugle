@@ -12,7 +12,8 @@ export const dinero = (n) => new Intl.NumberFormat(region.idioma, { style: 'curr
 export const numero = (n) => new Intl.NumberFormat(region.idioma).format(Number(n) || 0);
 export const fecha = (iso, opc = { day: 'numeric', month: 'short' }) => (iso ? new Date(iso).toLocaleDateString(region.idioma, opc) : '—');
 export const fechaHora = (iso) => (iso ? new Date(iso).toLocaleString(region.idioma, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—');
-export const hoyISO = () => new Date().toISOString().slice(0, 10);
+// Fecha local (no UTC): cerca de medianoche, toISOString() daría el día anterior o el siguiente
+export const hoyISO = () => new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
 export const dias = (iso) => (iso ? Math.floor((Date.now() - new Date(iso).getTime()) / 864e5) : null);
 
 export function hace(iso) {
@@ -21,8 +22,8 @@ export function hace(iso) {
   if (d <= 0) return 'hoy';
   if (d === 1) return 'ayer';
   if (d < 30) return `hace ${d} días`;
-  if (d < 365) return `hace ${Math.round(d / 30)} meses`;
-  return `hace ${Math.round(d / 365)} años`;
+  if (d < 365) { const m = Math.round(d / 30); return m === 1 ? 'hace 1 mes' : `hace ${m} meses`; }
+  const a = Math.round(d / 365); return a === 1 ? 'hace 1 año' : `hace ${a} años`;
 }
 
 const PALETA = ['#4285F4', '#20B8FF', '#9B7BDB', '#28B995', '#E3A64B', '#F16B75', '#5B8DEF', '#3FB6A8'];

@@ -15,3 +15,7 @@ This product uses third-party components:
 
 3. Some product ideas are inspired by Vocero CRM (https://github.com/kevinrivm/vocero-crm, MIT).
    No source code from Vocero CRM is included.
+
+4. The agents' memory, skills, scheduled routines and conversation search are inspired by
+   Hermes Agent (https://github.com/nousresearch/hermes-agent, Nous Research, MIT).
+   No source code from Hermes Agent is included.

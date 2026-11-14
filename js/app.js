@@ -5,8 +5,10 @@ import { cargarTodo, pendientesDeHoy, PLANTILLAS_INICIALES } from './negocio.js'
 import { alCambiarIA, encender, enCache, estadoIA } from './ia.js';
 import * as V from './vistas.js';
 import * as VIA from './vistas-ia.js';
+import { comprobarAcceso, recogerOrdenes } from './plataforma.js';
+import { revisarRutinas } from './agentes.js';
 
-export const VERSION = '1.0.0';
+export const VERSION = '1.1.0';
 
 const RUTAS = {
   inicio: { titulo: 'Inicio', pintar: V.inicio },
@@ -14,7 +16,7 @@ const RUTAS = {
   contacto: { titulo: 'Contacto', pintar: V.ficha, menu: 'contactos' },
   embudo: { titulo: 'Embudo de ventas', pintar: V.embudo },
   agenda: { titulo: 'Agenda y tareas', pintar: V.agenda },
-  asistente: { titulo: 'HGLmini1.1flash', pintar: VIA.asistente },
+  asistente: { titulo: 'Agentes IA', pintar: VIA.asistente },
   resultados: { titulo: 'Resultados', pintar: V.resultados },
   plantillas: { titulo: 'Plantillas', pintar: V.plantillas },
   ajustes: { titulo: 'Ajustes', pintar: VIA.ajustes },
@@ -49,6 +51,7 @@ async function pintar() {
     await def.pintar(vista, ctx);
     const n = pendientesDeHoy(ctx.datos).total;
     $('#n-hoy').textContent = n ? String(n) : '';
+    contarBandeja();
   } catch (e) {
     console.error(e);
     $('#vista').innerHTML = `<div class="tarjeta aviso">Algo ha fallado al mostrar esta pantalla: ${String(e.message || e)}</div>`;
@@ -58,10 +61,23 @@ async function pintar() {
   }
 }
 
+async function contarBandeja() {
+  const n = (await db.todos('bandeja')).filter((x) => !x.leida).length;
+  $('#n-bandeja').textContent = n ? String(n) : '';
+}
+ctx.contarBandeja = contarBandeja;
+
+// Trabajo en segundo plano de los agentes: rutinas programadas y órdenes de la Jefa de personal (BUSINESS)
+async function trabajoDeFondo() {
+  const n = (await revisarRutinas(ctx.recargar).catch(() => 0)) + (await recogerOrdenes(ctx.recargar).catch(() => 0));
+  if (n) { contarBandeja(); aviso(`Tus agentes han dejado ${n} ${n === 1 ? 'aviso' : 'avisos'} en la Bandeja`); }
+}
+
 // Repintar cuando cambian los datos (también desde otra pestaña), salvo si el usuario está escribiendo.
 let espera;
 db.alCambiar((tabla) => {
-  if (tabla === 'chat') return;
+  if (['chat', 'memoria', 'habilidades', 'rutinas', 'ordenes'].includes(tabla)) return;
+  if (tabla === 'bandeja') { contarBandeja(); return; }
   clearTimeout(espera);
   espera = setTimeout(() => {
     const foco = document.activeElement;
@@ -109,6 +125,7 @@ async function primeraVez() {
 }
 
 async function arrancar() {
+  await comprobarAcceso(); // sin cuenta HUGLE válida se queda en la pantalla de acceso
   await primeraVez();
   await aplicarMarca();
   tema(document.documentElement.dataset.theme || 'dark');
@@ -132,6 +149,9 @@ async function arrancar() {
 
   window.addEventListener('hashchange', pintar);
   await pintar();
+  setTimeout(trabajoDeFondo, 1500);
+  setInterval(trabajoDeFondo, 60000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) trabajoDeFondo(); });
 
   // Si el modelo ya está descargado y el usuario lo dejó encendido, se carga solo.
   if ((await db.ajuste('iaAuto', true)) && (await db.ajuste('iaUsada')) && (await enCache((await db.ajuste('iaModelo')) || undefined))) {

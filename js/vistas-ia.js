@@ -5,6 +5,11 @@ import { NOMBRE_IA, MODELO_POR_DEFECTO, TAMANO_MB, alCambiarIA, estadoIA, encend
 import * as H from './herramientas-ia.js';
 import { ETAPAS_POR_DEFECTO, ORIGENES, registrar, cargarEjemplo, borrarEjemplo, buscarDuplicado } from './negocio.js';
 import { enviarPlantilla } from './vistas.js';
+import { panelAgentes, panelBandeja, panelJefa } from './vistas-agentes.js';
+import { AGENTES, IDS } from './agentes.js';
+import { SECTORES } from './sectores.js';
+import { cuenta, urlPanel, salir } from './plataforma.js';
+import { PLATAFORMA } from './config.js';
 
 let controlador = null; // para detener la respuesta en curso
 const parar = () => { controlador?.abort(); controlador = null; };
@@ -60,58 +65,20 @@ async function asegurarIA() {
 
 /* ───────────── ASISTENTE ───────────── */
 export async function asistente(el, ctx) {
-  const pest = ctx.pestanaIA || 'chat';
-  el.innerHTML = `<div id="ia-tarjeta"></div>
-    <div class="filtros" style="margin:14px 0">${[['chat', 'Chat con tu CRM'], ['redactar', 'Redactar mensaje'], ['clasificar', 'Clasificar mensaje'], ['extraer', 'Sacar contacto de un texto']].map(([k, t]) => `<button data-p="${k}" class="${k === pest ? 'activo' : ''}">${t}</button>`).join('')}</div>
+  const PEST = { agentes: 'Agentes', bandeja: 'Bandeja', jefa: 'Jefa de personal', redactar: 'Redactar mensaje', clasificar: 'Clasificar mensaje', extraer: 'Sacar contacto de un texto' };
+  const pest = PEST[ctx.pestanaIA] ? ctx.pestanaIA : 'agentes';
+  const sinLeer = (await db.todos('bandeja')).filter((x) => !x.leida).length;
+  el.innerHTML = `<details class="tarjeta-ia" ${ctx.verIA ? 'open' : ''}><summary class="tenue">${icono('ia')}Motor de IA: ${NOMBRE_IA} <span id="ia-mini"></span></summary><div id="ia-tarjeta" style="margin-top:10px"></div></details>
+    <div class="filtros" style="margin:12px 0 14px">${Object.entries(PEST).map(([k, t]) => `<button data-p="${k}" class="${k === pest ? 'activo' : ''}">${t}${k === 'bandeja' && sinLeer ? ` (${sinLeer})` : ''}</button>`).join('')}</div>
     <div id="ia-panel"></div>`;
   tarjetaIA($('#ia-tarjeta', el), ctx);
+  const det = el.querySelector('.tarjeta-ia');
+  det.addEventListener('toggle', () => { ctx.verIA = det.open; });
+  const quitarMini = alCambiarIA((s) => { const m = $('#ia-mini', el); if (m) m.innerHTML = s.fase === 'lista' ? '<i class="punto ok"></i> activa' : s.fase === 'descargando' ? `<i class="punto va"></i> ${s.progreso} %` : '<i class="punto"></i> apagada (los agentes funcionan igual con reglas)'; });
+  const limpiar = ctx.limpiar; ctx.limpiar = () => { quitarMini(); limpiar?.(); };
   $$('[data-p]', el).forEach((b) => b.addEventListener('click', () => { parar(); ctx.pestanaIA = b.dataset.p; ctx.pintar(); }));
   const panel = $('#ia-panel', el);
-  await ({ chat: panelChat, redactar: panelRedactar, clasificar: panelClasificar, extraer: panelExtraer })[pest](panel, ctx);
-}
-
-async function panelChat(el, ctx) {
-  const historial = (await db.todos('chat')).sort((a, b) => a.fecha.localeCompare(b.fecha));
-  el.innerHTML = `<div class="tarjeta plana chat">
-    <div class="mensajes" id="msgs">${historial.length ? historial.map((m) => `<div class="burbuja ${m.rol === 'yo' ? 'yo' : 'ia'}">${esc(m.texto)}</div>`).join('') : `<div class="vacio">${icono('ia')}<div>Pregúntale a ${NOMBRE_IA} por tus clientes, tus ventas o qué hacer hoy.</div></div>`}</div>
-    <div class="sugerencias">${['¿Qué debería hacer hoy?', '¿Qué clientes tengo en riesgo?', 'Resume mi embudo de ventas', 'Dame ideas para conseguir más clientes'].map((s) => `<button type="button">${s}</button>`).join('')}</div>
-    <form id="f-chat"><textarea class="entrada" name="t" rows="1" placeholder="Escribe tu pregunta…"></textarea><button class="btn prim ico" id="b-env" aria-label="Enviar">${icono('enviar')}</button></form>
-    <div class="fila entre" style="padding:0 12px 10px"><span class="tenue">Las respuestas de una IA pequeña pueden equivocarse: revisa antes de actuar.</span><button class="btn fant peq" id="b-borrar">Borrar conversación</button></div>
-  </div>`;
-  const msgs = $('#msgs', el);
-  msgs.scrollTop = msgs.scrollHeight;
-  const form = $('#f-chat', el);
-  const ta = form.t;
-  ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); form.requestSubmit(); } });
-  $$('.sugerencias button', el).forEach((b) => b.addEventListener('click', () => { ta.value = b.textContent; form.requestSubmit(); }));
-  $('#b-borrar', el).addEventListener('click', async () => { if (await confirmar('¿Borrar toda la conversación?')) { await db.vaciar('chat'); ctx.pintar(); } });
-  form.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (controlador) { parar(); return; }
-    const texto = ta.value.trim();
-    if (!texto) return;
-    if (!(await asegurarIA())) return;
-    ta.value = '';
-    msgs.querySelector('.vacio')?.remove();
-    await db.guardar('chat', { rol: 'yo', texto, fecha: new Date().toISOString() });
-    msgs.insertAdjacentHTML('beforeend', `<div class="burbuja yo">${esc(texto)}</div><div class="burbuja ia pensando"></div>`);
-    const b = msgs.lastElementChild;
-    msgs.scrollTop = msgs.scrollHeight;
-    const boton = $('#b-env', el);
-    boton.innerHTML = icono('parar'); boton.setAttribute('aria-label', 'Detener');
-    controlador = new AbortController();
-    let resp = '';
-    try {
-      const hist = [...historial, { rol: 'yo', texto }];
-      resp = await H.charlar(hist, ctx.datos, null, { senal: controlador.signal, onTexto: (t) => { b.textContent = t; msgs.scrollTop = msgs.scrollHeight; } });
-    } catch (err) { if (err?.name !== 'AbortError' && !/abort/i.test(err?.message)) resp = 'No he podido responder: ' + (err.message || err); else resp = b.textContent; }
-    controlador = null;
-    b.classList.remove('pensando');
-    b.textContent = resp || '…';
-    boton.innerHTML = icono('enviar'); boton.setAttribute('aria-label', 'Enviar');
-    if (resp) await db.guardar('chat', { rol: 'ia', texto: resp, fecha: new Date().toISOString() });
-    historial.push({ rol: 'yo', texto }, { rol: 'ia', texto: resp });
-  });
+  await ({ agentes: panelAgentes, bandeja: panelBandeja, jefa: panelJefa, redactar: panelRedactar, clasificar: panelClasificar, extraer: panelExtraer })[pest](panel, ctx);
 }
 
 function selectorContactos(ctx, sel) {
@@ -242,7 +209,9 @@ async function panelExtraer(el, ctx) {
 /* ───────────── AJUSTES ───────────── */
 export async function ajustes(el, ctx) {
   const a = {};
-  for (const k of ['negocio', 'yo', 'sector', 'tono', 'infoNegocio', 'color', 'logo', 'moneda', 'diasSilencio', 'iaAuto', 'iaModelo', 'ejemplo']) a[k] = await db.ajuste(k);
+  for (const k of ['negocio', 'yo', 'sector', 'sectorId', 'tono', 'infoNegocio', 'color', 'logo', 'moneda', 'diasSilencio', 'iaAuto', 'iaModelo', 'ejemplo', ...IDS.map((x) => 'agente_' + x)]) a[k] = await db.ajuste(k);
+  const sec = SECTORES[a.sectorId] || SECTORES.general;
+  const cta = cuenta();
   const etapas = (await db.ajuste('etapas')) || ETAPAS_POR_DEFECTO;
   const qa = await db.todos('conocimiento');
   const uso = navigator.storage?.estimate ? await navigator.storage.estimate().catch(() => null) : null;
@@ -251,7 +220,8 @@ export async function ajustes(el, ctx) {
     <div class="tarjeta"><h2>Tu negocio</h2><form class="form" id="f-neg">
       <label class="campo"><span>Nombre del negocio</span><input name="negocio" value="${esc(a.negocio || '')}" placeholder="Mi negocio"></label>
       <label class="campo"><span>Tu nombre (para firmar mensajes)</span><input name="yo" value="${esc(a.yo || '')}"></label>
-      <label class="campo"><span>Sector</span><input name="sector" value="${esc(a.sector || '')}" placeholder="p. ej. clínica dental, tienda online…"></label>
+      <label class="campo"><span>Sector (especializa a tus agentes)</span><select name="sectorId">${Object.entries(SECTORES).map(([k, x]) => `<option value="${k}" ${k === (a.sectorId || 'general') ? 'selected' : ''}>${x.nombre}</option>`).join('')}</select></label>
+      <label class="campo"><span>Especialidad (opcional)</span><input name="sector" value="${esc(a.sector || '')}" placeholder="p. ej. clínica dental, moda mujer…"></label>
       <label class="campo"><span>Tono de los mensajes</span><select name="tono">${['cercano y profesional', 'formal', 'muy cercano y amable', 'directo y breve'].map((t) => `<option ${t === (a.tono || 'cercano y profesional') ? 'selected' : ''}>${t}</option>`).join('')}</select></label>
       <label class="campo todo"><span>Qué vendes y cómo trabajas (lo usa la IA)</span><textarea name="infoNegocio" rows="3" placeholder="Servicios, precios orientativos, zona, horario…">${esc(a.infoNegocio || '')}</textarea></label>
       <label class="campo"><span>Moneda</span><select name="moneda">${['EUR', 'USD', 'MXN', 'COP', 'ARS', 'CLP', 'PEN', 'GBP'].map((m) => `<option ${m === (a.moneda || 'EUR') ? 'selected' : ''}>${m}</option>`).join('')}</select></label>
@@ -260,7 +230,11 @@ export async function ajustes(el, ctx) {
       <div class="campo"><span>Logo</span><div class="fila"><img src="${esc(a.logo || 'img/logo.svg')}" alt="" style="width:40px;height:40px;border-radius:10px;object-fit:contain;background:var(--sup-2)"><button type="button" class="btn peq" id="b-logo">Cambiar</button>${a.logo ? '<button type="button" class="btn fant peq" id="b-logo-x">Quitar</button>' : ''}</div></div>
       <div class="todo fila"><button class="btn prim">Guardar</button>${a.color ? '<button type="button" class="btn fant" id="b-color-x">Color original</button>' : ''}</div></form></div>
 
-    <div class="tarjeta"><div class="fila entre"><h2>Etapas del embudo</h2><button class="btn peq" id="b-etapa">${icono('mas')}Añadir</button></div>
+    <div class="tarjeta pila"><h2>Tu equipo de agentes</h2>
+      <p class="tenue" style="margin:0">Ponles el nombre que quieras. Trabajan con el ciclo de compra de tu sector (${sec.ciclo} días): a partir de ahí, un cliente está «en riesgo».</p>
+      <form class="form" id="f-ag">${IDS.map((k) => `<label class="campo"><span>${AGENTES[k].rol}</span><input name="agente_${k}" value="${esc(a['agente_' + k] || AGENTES[k].nombre)}" maxlength="24"></label>`).join('')}<div class="todo fila"><button class="btn prim">Guardar nombres</button></div></form></div>
+
+    <div class="tarjeta"><div class="fila entre"><h2>Etapas del embudo</h2><span class="fila">${sec.etapas ? `<button class="btn fant peq" id="b-etapas-sector">Las de mi sector</button>` : ''}<button class="btn peq" id="b-etapa">${icono('mas')}Añadir</button></span></div>
       <p class="tenue">Ponlas en el orden de tu proceso de venta. «Ganada» y «Perdida» cierran la oportunidad.</p>
       <div class="pila" id="etapas">${etapas.map((e, i) => `<div class="fila" data-i="${i}" style="flex-wrap:nowrap">
         <input type="color" value="${esc(e.color)}" data-k="color" style="width:36px;height:36px;padding:2px;border:0;background:none">
@@ -271,6 +245,10 @@ export async function ajustes(el, ctx) {
   </div>
 
   <div class="pila">
+    ${PLATAFORMA.requiereCuenta ? `<div class="tarjeta pila"><h2>Tu cuenta HUGLE</h2>
+      ${cta ? `<p style="margin:0"><b>${esc(cta.nombre || cta.email)}</b> · ${esc(cta.email)}</p><div class="fila">${['crm', 'studio', 'business'].map((x) => `<span class="etiqueta ${cta.apps.includes(x) ? 'verde' : ''}">${x.toUpperCase()} HUGLE${cta.apps.includes(x) ? '' : ' · sin activar'}</span>`).join('')}</div>` : ''}
+      <p class="tenue" style="margin:0">La cuenta solo sirve para entrar y para las apps de pago. Tus clientes no salen de este dispositivo.</p>
+      <div class="fila"><a class="btn" href="${urlPanel()}">Abrir mi Control Center</a><button class="btn fant" id="b-salir">Cerrar sesión</button></div></div>` : ''}
     <div id="ia-tarjeta"></div>
     <div class="tarjeta pila"><h2>Opciones de la IA</h2>
       <label class="fila"><input type="checkbox" id="ia-auto" ${a.iaAuto !== false ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--marca)"> Activarla sola al abrir el CRM (si ya está descargada)</label>
@@ -290,7 +268,7 @@ export async function ajustes(el, ctx) {
       <div class="fila"><button class="btn" id="b-copia">${icono('bajar')}Descargar copia</button><button class="btn" id="b-restaurar">${icono('subir')}Restaurar copia</button></div>
       <div class="fila">${a.ejemplo ? '<button class="btn" id="b-sin-ejemplo">Quitar datos de ejemplo</button>' : '<button class="btn" id="b-ejemplo">Cargar datos de ejemplo</button>'}<button class="btn peligro" id="b-todo">${icono('papelera')}Borrar todo</button></div>
     </div>
-    <p class="tenue">CRM HUGLE ${(await import('./app.js')).VERSION} · Código abierto (MIT) · IA ${NOMBRE_IA} basada en MNN-Pocket-0.3B (Apache-2.0) y wllama (MIT).</p>
+    <p class="tenue">CRM HUGLE ${(await import('./app.js')).VERSION} · Código abierto (MIT) · IA ${NOMBRE_IA} basada en MNN-Pocket-0.3B (Apache-2.0) y wllama (MIT) · Memoria, habilidades y rutinas inspiradas en Hermes Agent (MIT).</p>
   </div></div>`;
 
   tarjetaIA($('#ia-tarjeta', el), ctx);
@@ -314,6 +292,21 @@ export async function ajustes(el, ctx) {
     aviso('Pulsa Guardar para aplicar el logo');
   });
   $('#b-logo-x', el)?.addEventListener('click', async () => { await db.fijar('logo', ''); await ctx.aplicarMarca(); ctx.pintar(); });
+
+  // Cuenta y agentes
+  $('#b-salir', el)?.addEventListener('click', async () => { if (await confirmar('¿Cerrar sesión en este dispositivo? Tus datos se quedan aquí; para volver a entrar abre el CRM desde tu Control Center.', 'Cerrar sesión')) salir(); });
+  $('#f-ag', el).addEventListener('submit', async (e) => {
+    e.preventDefault();
+    for (const [k, v] of Object.entries(datosForm(e.target))) await db.fijar(k, v.trim());
+    aviso('Nombres guardados'); ctx.pintar();
+  });
+  $('#b-etapas-sector', el)?.addEventListener('click', async () => {
+    if (!(await confirmar(`¿Usar las etapas típicas de ${sec.nombre.toLowerCase()}? Las oportunidades de etapas que desaparezcan pasarán a «${sec.etapas[0].nombre}».`, 'Usar'))) return;
+    const ids = new Set(sec.etapas.map((x) => x.id));
+    for (const t of ctx.datos.tratos) if (!ids.has(t.etapa)) await db.guardar('tratos', { ...t, etapa: sec.etapas[0].id });
+    await db.fijar('etapas', sec.etapas.map((x) => ({ ...x })));
+    aviso('Etapas del sector aplicadas'); ctx.pintar();
+  });
 
   // Etapas
   let lista = etapas.map((e) => ({ ...e }));

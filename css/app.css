@@ -285,3 +285,53 @@ dialog.modal.ancho { width: min(820px, calc(100vw - 24px)); }
 .bienvenida .btn.prim { background: #fff; color: #17243A; border-color: #fff; }
 
 @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+
+/* Agentes IA (1.1.0) */
+.tarjeta-ia { background: var(--sup); border: 1px solid var(--borde); border-radius: var(--r-l); padding: 10px 14px; }
+.tarjeta-ia summary { cursor: pointer; display: flex; align-items: center; gap: 8px; list-style: none; font-size: 13px; }
+.tarjeta-ia summary::-webkit-details-marker { display: none; }
+.tarjeta-ia #ia-tarjeta .tarjeta { border: 0; padding: 0; }
+.agentes-sel { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.agente-tar { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; border-radius: var(--r-l); border: 1px solid var(--borde); background: var(--sup); color: var(--texto); cursor: pointer; min-width: 0; }
+.agente-tar span { min-width: 0; }
+.agente-tar b { display: block; }
+.agente-tar small { display: block; color: var(--texto-3); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agente-tar.activo { border-color: var(--c); box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 22%, transparent); }
+.cara { display: inline-grid; place-items: center; flex: none; border-radius: 30%; background: color-mix(in srgb, var(--c) 20%, var(--sup-2)); color: var(--c); }
+.cara svg.i { width: 55%; height: 55%; }
+.agentes-cuerpo { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 14px; align-items: start; }
+.agentes-cuerpo .chat { height: calc(100dvh - var(--barra-h) - 250px); }
+.lado-ag { max-height: calc(100dvh - var(--barra-h) - 250px); min-height: 420px; overflow-y: auto; }
+.lista.sin-borde { margin: 0 -8px; }
+.lista.sin-borde > li { padding: 10px 8px; }
+.lista.sin-borde .tit, .lista.sin-borde .sub { white-space: normal; }
+.acciones-ag { margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--borde); display: flex; flex-direction: column; gap: 6px; white-space: normal; }
+.accion { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.accion.hecha { color: var(--texto-3); }
+.accion.hecha svg { color: var(--verde); }
+.aviso-ag { margin-bottom: 12px; }
+.aviso-ag.nuevo { border-color: color-mix(in srgb, var(--marca) 55%, transparent); }
+.orden { padding: 10px 0; border-top: 1px solid var(--borde); display: flex; flex-direction: column; gap: 4px; }
+.pasos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 4px 12px; font-size: 13.5px; }
+.pasos input { width: 16px; height: 16px; accent-color: var(--marca); }
+@media (max-width: 1000px) {
+  .agentes-cuerpo { grid-template-columns: 1fr; }
+  .agentes-cuerpo .chat { height: calc(100dvh - var(--barra-h) - 300px); min-height: 380px; }
+  .lado-ag { max-height: none; min-height: 0; }
+}
+@media (max-width: 640px) {
+  .agentes-sel { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .agente-tar { flex-direction: column; text-align: center; padding: 8px 4px; gap: 4px; }
+  .agente-tar small { display: none; }
+}
+
+/* Pantalla de acceso con cuenta HUGLE */
+.acceso { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 16px; background: radial-gradient(circle at 50% 0%, color-mix(in srgb, var(--marca) 22%, var(--fondo)), var(--fondo) 70%); }
+.acceso-caja { width: min(440px, 100%); background: var(--sup); border: 1px solid var(--borde); border-radius: 22px; padding: 28px 24px; text-align: center; display: flex; flex-direction: column; gap: 12px; align-items: center; box-shadow: var(--sombra); }
+.acceso-caja h1 { margin: 0; font-size: 26px; }
+.acceso-caja p { margin: 0; }
+.acceso-caja .aviso { text-align: left; width: 100%; }
+.btn.grande { min-height: 48px; padding: 0 22px; font-size: 15px; width: 100%; justify-content: center; }
+.opcion { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
+.opcion input[type=checkbox] { flex: none; width: 18px; height: 18px; margin-top: 1px; accent-color: var(--marca); }
+@media (max-width: 640px) { .agentes-cuerpo .sugerencias { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .agentes-cuerpo .sugerencias button { flex: none; } .tarjeta-ia summary { font-size: 12px; } }

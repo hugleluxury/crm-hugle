@@ -1,6 +1,7 @@
 // Reglas del CRM: etapas, segmentos, puntuación, alertas y resultados.
 import * as db from './db.js';
 import { dias, hoyISO, normTel, normEmail } from './util.js';
+import { SECTORES } from './sectores.js';
 
 export const ETAPAS_POR_DEFECTO = [
   { id: 'nuevo', nombre: 'Nuevo', color: '#20B8FF', tipo: 'abierta' },
@@ -16,11 +17,11 @@ export const TIPOS_TAREA = { llamada: 'Llamada', mensaje: 'Mensaje', reunion: 'R
 export const TIPOS_ACTIVIDAD = { nota: 'Nota', llamada: 'Llamada', mensaje: 'Mensaje', email: 'Email', reunion: 'Reunión', sistema: 'Sistema' };
 
 export const SEGMENTOS = {
-  campeon: { nombre: 'Campeón', clase: 'verde', ayuda: '3+ compras y la última hace menos de 60 días' },
+  campeon: { nombre: 'Campeón', clase: 'verde', ayuda: '3+ compras y la última dentro de su ciclo de compra' },
   leal: { nombre: 'Leal', clase: 'azul', ayuda: '2+ compras recientes' },
-  nuevo: { nombre: 'Cliente nuevo', clase: 'violeta', ayuda: 'Primera compra en los últimos 60 días' },
-  riesgo: { nombre: 'En riesgo', clase: 'ambar', ayuda: 'Última compra hace 60–180 días' },
-  dormido: { nombre: 'Dormido', clase: 'rojo', ayuda: 'Más de 180 días sin comprar' },
+  nuevo: { nombre: 'Cliente nuevo', clase: 'violeta', ayuda: 'Primera compra reciente' },
+  riesgo: { nombre: 'En riesgo', clase: 'ambar', ayuda: 'Ha pasado su ciclo de compra sin volver (según tu sector)' },
+  dormido: { nombre: 'Dormido', clase: 'rojo', ayuda: 'Más de 3 ciclos de compra sin volver' },
   lead: { nombre: 'Lead', clase: '', ayuda: 'Todavía no ha comprado' },
 };
 
@@ -30,9 +31,10 @@ export async function etapas() {
 
 // Carga todo lo necesario para pintar cualquier vista (los volúmenes de un CRM local caben en memoria).
 export async function cargarTodo() {
-  const [contactos, tratos, tareas, actividades, ventas, listaEtapas, silencio] = await Promise.all([
-    db.todos('contactos'), db.todos('tratos'), db.todos('tareas'), db.todos('actividades'), db.todos('ventas'), etapas(), db.ajuste('diasSilencio', 7),
+  const [contactos, tratos, tareas, actividades, ventas, listaEtapas, silencio, sectorId] = await Promise.all([
+    db.todos('contactos'), db.todos('tratos'), db.todos('tareas'), db.todos('actividades'), db.todos('ventas'), etapas(), db.ajuste('diasSilencio', 7), db.ajuste('sectorId', 'general'),
   ]);
+  const ciclo = (SECTORES[sectorId] || SECTORES.general).ciclo;
   const porId = new Map(contactos.map((c) => [c.id, c]));
   const vMap = agrupar(ventas);
   const aMap = agrupar(actividades);
@@ -46,10 +48,10 @@ export async function cargarTodo() {
     c._gastado = vs.reduce((s, v) => s + (Number(v.importe) || 0), 0);
     c._ultimaCompra = max(vs.map((v) => v.fecha));
     c._ultimaActividad = max([c.creado, ...ac.map((a) => a.fecha), ...vs.map((v) => v.fecha)]);
-    c._segmento = segmento(c);
+    c._segmento = segmento(c, ciclo);
     c._puntuacion = puntuacion(c);
   }
-  return { contactos, porId, tratos, tareas, actividades, ventas, etapas: listaEtapas, diasSilencio: Number(silencio) || 7 };
+  return { contactos, porId, tratos, tareas, actividades, ventas, etapas: listaEtapas, diasSilencio: Number(silencio) || 7, ciclo, sectorId: SECTORES[sectorId] ? sectorId : 'general' };
 }
 
 function agrupar(lista) {
@@ -59,11 +61,12 @@ function agrupar(lista) {
 }
 const max = (fechas) => fechas.filter(Boolean).sort().at(-1) || null;
 
-export function segmento(c) {
+// El ciclo de compra depende del sector (un gimnasio: 30 días; una inmobiliaria: un año).
+export function segmento(c, ciclo = 60) {
   if (!c._compras) return 'lead';
   const d = dias(c._ultimaCompra);
-  if (d > 180) return 'dormido';
-  if (d > 60) return 'riesgo';
+  if (d > ciclo * 3) return 'dormido';
+  if (d > ciclo) return 'riesgo';
   if (c._compras >= 3) return 'campeon';
   if (c._compras >= 2) return 'leal';
   return 'nuevo';

@@ -1,7 +1,8 @@
 // CRM HUGLE · almacén local (IndexedDB). Todo se guarda en el dispositivo del usuario.
 const NOMBRE = 'crm-hugle';
-const VERSION = 1;
-export const TABLAS = ['contactos', 'tratos', 'tareas', 'actividades', 'ventas', 'plantillas', 'conocimiento', 'chat', 'ajustes'];
+const VERSION = 2;
+// v2 (15-11-2026): memoria, habilidades y rutinas de los agentes, bandeja de avisos y órdenes de la Jefa de personal.
+export const TABLAS = ['contactos', 'tratos', 'tareas', 'actividades', 'ventas', 'plantillas', 'conocimiento', 'chat', 'ajustes', 'memoria', 'habilidades', 'rutinas', 'bandeja', 'ordenes'];
 
 let conexion;
 

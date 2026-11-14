@@ -158,11 +158,11 @@ export const INTENCIONES = {
 const PISTAS = [
   ['baja', /(no me interesa|no gracias|dejad de|dejen de|darme de baja|no quiero (nada|recibir)|borradme|no me escrib)/],
   ['queja', /(queja|reclam|fatal|roto|rota|defectuos|no funciona|estafa|enfadad|cabread|verguenza|decepcion|mal servicio|devolucion|devolver|reembolso)/],
-  ['soporte', /(mi pedido|el pedido|seguimiento|no (me )?ha llegado|no llega|envio|factura|cambio de talla|cambiar la talla|numero de pedido)/],
+  ['soporte', /(mi pedido|el pedido|seguimiento|no (me )?ha llegado|no llega|(mi|el) envio|factura|cambio de talla|cambiar la talla|numero de pedido)/],
   ['cita', /(cita|reunion|llamad|llamame|llamarme|quedar|agendar|hueco|disponibilidad|visita|pasarme por)/],
   ['compra', /(comprar|lo quiero|la quiero|me lo quedo|me la quedo|reservar|reserva|contratar|como (pago|puedo pagar)|apuntame|hacer (un )?pedido|quiero (el|la|uno|una|dos))/],
   ['precio', /(precio|cuanto (cuesta|vale|sale|es)|cuanto seria|tarifa|presupuesto|coste|costo|descuento|oferta|promocion)/],
-  ['informacion', /(info|informacion|saber mas|detalles|horario|donde estais|donde esta|como funciona|teneis|tienen|hay disponible)/],
+  ['informacion', /(info|informacion|saber mas|detalles|horario|donde estais|donde esta|como funciona|teneis|tienen|haceis|hacen|enviais|envios a|llegais|hay disponible)/],
 ];
 export function clasificarPorReglas(texto) {
   const t = sinTildes(texto);
