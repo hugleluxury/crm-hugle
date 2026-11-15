@@ -2,6 +2,7 @@
 import * as db from './db.js';
 import { $, $$, aviso, modal, icono, region } from './util.js';
 import { cargarTodo, pendientesDeHoy, PLANTILLAS_INICIALES } from './negocio.js';
+import { sembrarOficio } from './oficio.js';
 import { alCambiarIA, encender, enCache, estadoIA, instalar } from './ia.js';
 import { aplicarConexiones } from './conexiones.js';
 import * as V from './vistas.js';
@@ -130,6 +131,7 @@ async function primeraVez() {
 async function arrancar() {
   await comprobarAcceso(); // sin cuenta HUGLE válida se queda en la pantalla de acceso
   await primeraVez();
+  await sembrarOficio().catch(() => {});
   ofrecerInstalar();
   await aplicarMarca();
   tema(document.documentElement.dataset.theme || 'dark');
