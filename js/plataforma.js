@@ -151,12 +151,14 @@ export async function recogerWhatsApp(cargar) {
   leyendoWA = true;
   let n = 0;
   try {
-    const { mensajes } = await api('/v1/whatsapp/entrantes');
+    const { mensajes = [] } = await api('/v1/whatsapp/entrantes');
     if (!mensajes.length) return 0;
     const auto = await db.ajuste('waAuto', false);
+    // Cada mensaje se confirma nada más procesarlo: si uno falla, los ya hechos no vuelven (ni se responden dos veces)
     for (const m of mensajes) {
+      try {
       const d = await cargar();
-      let c = buscarDuplicado(d.contactos, { telefono: m.telefono });
+      let c = m.telefono ? buscarDuplicado(d.contactos, { telefono: m.telefono }) : null;
       if (!c) c = await db.guardar('contactos', { nombre: m.nombre || (m.telefono ? '+' + m.telefono.replace(/^\+/, '') : 'Cliente de WhatsApp'), telefono: m.telefono || '', origen: 'WhatsApp', etiquetas: ['whatsapp'] });
       await registrar(c.id, 'mensaje', `WhatsApp recibido: ${m.texto}`, m.fecha);
       const r = await clasificar(m.texto, c);
@@ -165,8 +167,9 @@ export async function recogerWhatsApp(cargar) {
       if (auto && !['queja', 'baja'].includes(r.intencion)) { try { await aplicarAccion(accion); accion.hecha = true; enviada = true; } catch {} }
       await db.guardar('bandeja', { agente: 'atencion', titulo: `WhatsApp de ${c.nombre} · ${r.nombre}`, texto: `«${m.texto}»\n\n${enviada ? 'Nora ha respondido' : 'Nora propone responder'}: ${r.respuesta}`, acciones: [accion], fecha: new Date().toISOString(), leida: false, origen: 'whatsapp' });
       n++;
+      } catch (x) { console.warn('WhatsApp', m.id, x); continue; }
+      await api('/v1/whatsapp/entrantes/recibidos', { metodo: 'POST', cuerpo: { ids: [m.id] } }).catch(() => {});
     }
-    await api('/v1/whatsapp/entrantes/recibidos', { metodo: 'POST', cuerpo: { ids: mensajes.map((m) => m.id) } });
   } catch (e) {
     if (e.estado === 401) { escribir(null); location.reload(); }
   } finally { leyendoWA = false; }

@@ -25,13 +25,26 @@ function htmlAcciones(acciones = []) {
 }
 // Engancha los botones; `guardar(acciones)` persiste el estado en su registro (chat o bandeja)
 function engancharAcciones(caja, acciones, guardar) {
-  const aprobar = async (i) => { if (acciones[i].hecha) return; await aplicarAccion(acciones[i]); acciones[i].hecha = true; };
+  // Solo se marca hecha si de verdad se ha creado o enviado; los fallos se avisan y el estado se guarda siempre
+  const aprobar = async (i) => {
+    if (acciones[i].hecha) return false;
+    if (!(await aplicarAccion(acciones[i]))) throw new Error(acciones[i].tipo === 'whatsapp' ? 'WhatsApp no está conectado: no se ha enviado.' : 'No se ha podido aplicar.');
+    acciones[i].hecha = true; return true;
+  };
+  const texto = (n, wa) => wa ? (n === 1 ? 'Respuesta enviada por WhatsApp' : `${n} respuestas enviadas por WhatsApp`) : (n === 1 ? 'Tarea creada en Agenda' : `${n} tareas creadas en Agenda`);
   caja.querySelectorAll('[data-aprobar]').forEach((b) => b.addEventListener('click', async () => {
-    await aprobar(Number(b.closest('[data-i]').dataset.i)); await guardar(acciones); aviso(acciones[Number(b.closest('[data-i]').dataset.i)].tipo === 'whatsapp' ? 'Respuesta enviada por WhatsApp' : 'Tarea creada en Agenda'); repintar();
+    const i = Number(b.closest('[data-i]').dataset.i);
+    b.disabled = true;
+    try { await aprobar(i); aviso(texto(1, acciones[i].tipo === 'whatsapp')); }
+    catch (e) { aviso(e.message || 'No se ha podido enviar. Prueba otra vez.'); }
+    finally { await guardar(acciones); repintar(); }
   }));
-  caja.querySelector('[data-todas]')?.addEventListener('click', async () => {
-    for (let i = 0; i < acciones.length; i++) await aprobar(i);
-    await guardar(acciones); aviso(`${acciones.length} tareas creadas en Agenda`); repintar();
+  caja.querySelector('[data-todas]')?.addEventListener('click', async (ev) => {
+    ev.currentTarget.disabled = true;
+    let n = 0;
+    try { for (let i = 0; i < acciones.length; i++) if (await aprobar(i)) n++; aviso(texto(n, acciones.every((a) => a.tipo === 'whatsapp'))); }
+    catch (e) { aviso((n ? texto(n, acciones.every((a) => a.tipo === 'whatsapp')) + '. ' : '') + (e.message || 'Ha fallado una.')); }
+    finally { await guardar(acciones); repintar(); }
   });
   function repintar() { const nuevo = document.createElement('div'); nuevo.innerHTML = htmlAcciones(acciones); const viejo = caja.querySelector('.acciones-ag'); viejo.replaceWith(nuevo.firstElementChild); engancharAcciones(caja, acciones, guardar); }
 }

@@ -14,7 +14,7 @@ function panel(html, conBoton) {
   d.id = 'hg-instalar';
   d.setAttribute('role', 'dialog');
   d.setAttribute('aria-label', 'Instalar CRM HUGLE');
-  d.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:440px;margin:0 auto;padding:18px;border-radius:16px;background:var(--sup-2,#17243A);color:var(--texto,#F5F7FA);border:1px solid var(--borde-f,rgba(170,181,197,.3));box-shadow:0 18px 50px rgba(0,0,0,.45);font:15px/1.45 inherit';
+  d.style.cssText = 'position:fixed;left:16px;right:16px;bottom:16px;z-index:9999;max-width:440px;margin:0 auto;padding:18px;border-radius:16px;background:var(--sup-2,#17243A);color:var(--texto,#F5F7FA);border:1px solid var(--borde-f,rgba(170,181,197,.3));box-shadow:0 18px 50px rgba(0,0,0,.45);font-size:15px;line-height:1.45;font-family:inherit';
   d.innerHTML = `<div style="display:flex;gap:12px;align-items:flex-start"><img src="img/icono-180.png" alt="" width="44" height="44" style="border-radius:11px;flex:none">
     <div style="flex:1"><b style="font-size:16px">Instala CRM HUGLE</b><div style="color:var(--texto-2,#AAB5C5);margin-top:4px">${html}</div>
     <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">${conBoton ? '<button type="button" class="btn peq prim" data-si>Instalar</button>' : ''}<button type="button" class="btn peq" data-no>${conBoton ? 'Ahora no' : 'Entendido'}</button></div></div></div>`;
@@ -27,7 +27,9 @@ function panel(html, conBoton) {
     d.remove();
     if (r?.outcome === 'accepted') panel('Listo: la tienes en tu escritorio o pantalla de inicio. Funciona también sin internet.', false);
   });
+  d.addEventListener('keydown', (e) => { if (e.key === 'Escape') d.remove(); });
   document.body.append(d);
+  (d.querySelector('[data-si]') || d.querySelector('[data-no]')).focus();
 }
 
 export function ofrecerInstalar() {
