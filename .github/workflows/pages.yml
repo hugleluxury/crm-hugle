@@ -27,7 +27,7 @@ jobs:
       - name: Preparar la web
         run: |
           mkdir _site
-          cp -r index.html manifest.webmanifest sw.js _headers css js img vendor _site/
+          cp -r index.html manifest.webmanifest sw.js _headers css js img vendor modelo _site/
           touch _site/.nojekyll
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
