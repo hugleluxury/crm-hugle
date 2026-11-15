@@ -267,7 +267,7 @@ export async function panelJefa(el, ctx) {
     el.innerHTML = `<div class="rejilla r-2"><div class="tarjeta pila jefa-bloq">
         <div class="fila">${icono('escudo')}<h2 style="margin:0">Jefa de personal</h2><span class="etiqueta violeta">BUSINESS HUGLE</span></div>
         <p style="margin:0">Con <b>BUSINESS HUGLE</b>, la Jefa de personal dirige a ${lista.map((a) => esc(a.nombre)).join(', ')}: les reparte encargos desde tu Control Center (o desde aquí), ellos los hacen con los datos de este dispositivo y te devuelven un informe.</p>
-        <ul class="tenue" style="margin:0;padding-left:18px"><li>«Recupera a los clientes en riesgo y revisa el embudo» → Iris y Marco se ponen a ello.</li><li>Informes sin teléfonos ni correos; los nombres, abreviados.</li><li>Las tareas que propongan esperan tu aprobación (o se crean solas, si lo eliges).</li></ul>
+        <ul class="tenue" style="margin:0;padding-left:18px"><li>«Recupera a los clientes en riesgo y revisa el embudo» → Venus y Hermes se ponen a ello.</li><li>Informes sin teléfonos ni correos; los nombres, abreviados.</li><li>Las tareas que propongan esperan tu aprobación (o se crean solas, si lo eliges).</li></ul>
         <div class="fila"><a class="btn grad" href="${urlPanel('&ver=business')}">${icono('rayo')}Ver BUSINESS HUGLE en tu Control Center</a></div>
         ${c ? `<p class="tenue" style="margin:0">Tu cuenta (${esc(c.email)}) tiene: ${c.apps.map((a) => a.toUpperCase() + ' HUGLE').join(', ')}.</p>` : ''}
       </div>

@@ -36,7 +36,7 @@ CRM HUGLE es una de las tres aplicaciones de **HUGLE PLATFORM 2.0** y la única 
 | **Agenda y tareas** | Llamadas, mensajes, reuniones y tareas con fecha y hora: vencidas, hoy, mañana, próximos días. |
 | **Resultados** | Contactos nuevos, oportunidades ganadas, valor cerrado y tareas completadas frente al periodo anterior (7, 30, 90 días o 1 año), embudo y **origen de las ventas**. |
 | **Plantillas** | Mensajes con variables (`{{nombre}}`, `{{negocio}}`, `{{yo}}`, `{{fecha}}`…) que se abren listos en WhatsApp o en el correo. Tú decides si los envías. |
-| **Agentes IA** | Marco (ventas), Nora (atención al cliente) e Iris (fidelización), con memoria, habilidades, rutinas y Bandeja de avisos (ver abajo). |
+| **Agentes IA** | Hermes (ventas), Gaia (atención al cliente) e Venus (fidelización), con memoria, habilidades, rutinas y Bandeja de avisos (ver abajo). |
 | **HGL-mini2.0flash** | Redactar mensajes, clasificar mensajes de clientes y sacar contactos de un texto (ver abajo). |
 | **Conexiones** | **WhatsApp** (tu número, prefijo de país y tu enlace para captar clientes), **correo** (Gmail, Outlook o la app del dispositivo, con firma), **calendario** (tareas a Google Calendar, iPhone u Outlook con aviso) e **importar contactos** (Google, iPhone, Excel, Shopify, WooCommerce, Outlook). Sin claves ni servidores. |
 | **Tu marca** | Nombre del negocio, color y logo. Tema claro y oscuro. |
@@ -47,13 +47,13 @@ CRM HUGLE es una de las tres aplicaciones de **HUGLE PLATFORM 2.0** y la única 
 
 | Agente | Se ocupa de | Ejemplos |
 |---|---|---|
-| **Marco · Ventas** | Prioridades comerciales, leads sin respuesta, oportunidades estancadas, embudo con previsión ponderada, ventas del mes | «¿Qué hago hoy?», «oportunidades estancadas», «¿cómo va el embudo?» |
-| **Nora · Atención al cliente** | Clientes que esperan respuesta, responder a un mensaje, quejas e incidencias, tareas vencidas, preguntas frecuentes del sector | «¿quién espera respuesta?», «responde: ¿hacéis envíos a mi zona?» |
-| **Iris · Fidelización** | Clientes en riesgo, a punto de recomprar, mejores clientes y reseñas, campañas por segmento | «clientes en riesgo», «prepara una campaña para clientes dormidos» |
+| **Hermes · Ventas** | Prioridades comerciales, leads sin respuesta, oportunidades estancadas, embudo con previsión ponderada, ventas del mes | «¿Qué hago hoy?», «oportunidades estancadas», «¿cómo va el embudo?» |
+| **Gaia · Atención al cliente** | Clientes que esperan respuesta, responder a un mensaje, quejas e incidencias, tareas vencidas, preguntas frecuentes del sector | «¿quién espera respuesta?», «responde: ¿hacéis envíos a mi zona?» |
+| **Venus · Fidelización** | Clientes en riesgo, a punto de recomprar, mejores clientes y reseñas, campañas por segmento | «clientes en riesgo», «prepara una campaña para clientes dormidos» |
 
 - **Especializados por sector** (Ajustes → Tu negocio): tienda online, hostelería, clínica y estética, peluquería, inmobiliaria, servicios profesionales, reformas, academia, gimnasio o general. El sector cambia el **ciclo de compra** (cuándo un cliente pasa a estar «en riesgo»: 30 días en un gimnasio, un año en una inmobiliaria), las etapas sugeridas del embudo, las preguntas frecuentes que conviene tener respondidas y los consejos de cada agente. Puedes cambiarles el nombre.
 - **Proponen, tú apruebas.** Cuando ven algo que hacer (seguimientos, reactivaciones, reseñas…) te proponen tareas con un botón de aprobar. Nunca envían mensajes por su cuenta.
-- **Se pasan el trabajo.** Si le pides a Marco algo de fidelización, se lo encarga a Iris y te trae la respuesta.
+- **Se pasan el trabajo.** Si le pides a Hermes algo de fidelización, se lo encarga a Venus y te trae la respuesta.
 - **Funcionan aunque la IA esté apagada** (con reglas); con HGL-mini2.0flash encendida entienden peticiones más libres.
 
 Ideas tomadas de [Hermes Agent](https://github.com/nousresearch/hermes-agent) (Nous Research, MIT) y adaptadas a un CRM local:

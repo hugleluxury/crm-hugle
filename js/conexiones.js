@@ -112,10 +112,10 @@ async function estadoWA() {
 }
 function cuerpoWA(s, auto) {
   return `<div class="pila">
-    <p class="tenue" style="margin:0">Conecta el número de <b>WhatsApp Business</b> de tu negocio y tus agentes leerán cada mensaje nuevo: Nora crea o encuentra el contacto, entiende qué quiere y prepara la respuesta. Tú la envías con un toque desde la Bandeja, o dejas que responda sola.</p>
+    <p class="tenue" style="margin:0">Conecta el número de <b>WhatsApp Business</b> de tu negocio y tus agentes leerán cada mensaje nuevo: Gaia crea o encuentra el contacto, entiende qué quiere y prepara la respuesta. Tú la envías con un toque desde la Bandeja, o dejas que responda sola.</p>
     ${pasos(['Pulsa <b>Conectar con Meta</b> y entra con la cuenta de Facebook que administra tu negocio.', 'Elige o registra el número de WhatsApp Business (si ya lo usas en el móvil, Meta te deja seguir usándolo).', 'Vuelve aquí: los mensajes nuevos aparecen en la <b>Bandeja</b> de tus agentes cada minuto con el CRM abierto.'])}
     ${s?.conectada ? `<div class="aviso">Conectado · ${esc(s.perfil || 'WhatsApp Business')}</div>
-      <label class="opcion"><input type="checkbox" name="auto" ${auto ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--marca)"> Nora responde sola (las quejas y las bajas siempre esperan tu visto bueno)</label>
+      <label class="opcion"><input type="checkbox" name="auto" ${auto ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--marca)"> Gaia responde sola (las quejas y las bajas siempre esperan tu visto bueno)</label>
       <div class="fila"><button type="button" class="btn peq" data-wa-quitar>Desconectar</button></div>`
       : s && !s.disponible ? '<div class="aviso">La conexión automática de WhatsApp aún no está activada en HUGLE. Muy pronto.</div>'
       : s ? `<div class="fila"><button type="button" class="btn peq prim" data-wa-conectar>${icono('whatsapp')}Conectar con Meta</button></div>`

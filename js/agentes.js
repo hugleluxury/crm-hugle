@@ -14,9 +14,9 @@ import { SECTORES, sectorActual } from './sectores.js';
 import { clasificar, buscarConocimiento, fichaTexto, siguientePaso, mensajePorPlantilla } from './herramientas-ia.js';
 
 export const AGENTES = {
-  ventas: { nombre: 'Marco', rol: 'Agente de ventas', color: '#4285F4', icono: 'embudo', foco: 'Embudo, leads sin respuesta, presupuestos y previsión de ventas.' },
-  atencion: { nombre: 'Nora', rol: 'Agente de atención al cliente', color: '#28B995', icono: 'plantillas', foco: 'Mensajes de clientes, dudas frecuentes, quejas y tareas pendientes.' },
-  fidelizacion: { nombre: 'Iris', rol: 'Agente de fidelización', color: '#9B7BDB', icono: 'escudo', foco: 'Clientes en riesgo, recompra, reseñas y campañas.' },
+  ventas: { nombre: 'Hermes', rol: 'Agente de ventas', color: '#4285F4', icono: 'embudo', foco: 'Embudo, leads sin respuesta, presupuestos y previsión de ventas.' },
+  atencion: { nombre: 'Gaia', rol: 'Agente de atención al cliente', color: '#28B995', icono: 'plantillas', foco: 'Mensajes de clientes, dudas frecuentes, quejas y tareas pendientes.' },
+  fidelizacion: { nombre: 'Venus', rol: 'Agente de fidelización', color: '#9B7BDB', icono: 'escudo', foco: 'Clientes en riesgo, recompra, reseñas y campañas.' },
 };
 export const IDS = Object.keys(AGENTES);
 

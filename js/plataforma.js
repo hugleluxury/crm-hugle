@@ -133,7 +133,7 @@ export async function recogerOrdenes(cargar) {
 }
 
 /* ───────── WhatsApp Business (conexión por HUGLE): los agentes leen y responden ───────── */
-// La API guarda cada WhatsApp entrante; aquí se recoge, se crea o encuentra el contacto, Nora (atención) lo clasifica y
+// La API guarda cada WhatsApp entrante; aquí se recoge, se crea o encuentra el contacto, Gaia (atención) lo clasifica y
 // redacta la respuesta en el dispositivo. Con «responder solo» activado se envía sin esperar (menos quejas y bajas, que
 // siempre esperan tu visto bueno); si no, queda en la Bandeja con un botón «Enviar».
 export const conexionesPlataforma = () => api('/v1/conexiones?app=crm');
@@ -165,7 +165,7 @@ export async function recogerWhatsApp(cargar) {
       const accion = { tipo: 'whatsapp', titulo: `Responder a ${c.nombre}: «${r.respuesta.slice(0, 90)}${r.respuesta.length > 90 ? '…' : ''}»`, texto: r.respuesta, conversacion: m.conversacion, contacto: c.id, vence: new Date().toISOString().slice(0, 10) };
       let enviada = false;
       if (auto && !['queja', 'baja'].includes(r.intencion)) { try { await aplicarAccion(accion); accion.hecha = true; enviada = true; } catch {} }
-      await db.guardar('bandeja', { agente: 'atencion', titulo: `WhatsApp de ${c.nombre} · ${r.nombre}`, texto: `«${m.texto}»\n\n${enviada ? 'Nora ha respondido' : 'Nora propone responder'}: ${r.respuesta}`, acciones: [accion], fecha: new Date().toISOString(), leida: false, origen: 'whatsapp' });
+      await db.guardar('bandeja', { agente: 'atencion', titulo: `WhatsApp de ${c.nombre} · ${r.nombre}`, texto: `«${m.texto}»\n\n${enviada ? 'Gaia ha respondido' : 'Gaia propone responder'}: ${r.respuesta}`, acciones: [accion], fecha: new Date().toISOString(), leida: false, origen: 'whatsapp' });
       n++;
       } catch (x) { console.warn('WhatsApp', m.id, x); continue; }
       await api('/v1/whatsapp/entrantes/recibidos', { metodo: 'POST', cuerpo: { ids: [m.id] } }).catch(() => {});
