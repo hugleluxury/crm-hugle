@@ -335,3 +335,8 @@ dialog.modal.ancho { width: min(820px, calc(100vw - 24px)); }
 .opcion { display: flex; gap: 10px; align-items: flex-start; cursor: pointer; }
 .opcion input[type=checkbox] { flex: none; width: 18px; height: 18px; margin-top: 1px; accent-color: var(--marca); }
 @media (max-width: 640px) { .agentes-cuerpo .sugerencias { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; } .agentes-cuerpo .sugerencias button { flex: none; } .tarjeta-ia summary { font-size: 12px; } }
+
+/* Conexiones */
+.con-ico { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; background: var(--sup-3); color: var(--marca-2); flex: none; }
+.pasos { margin: 0; padding-left: 20px; display: grid; gap: 6px; font-size: 13.5px; color: var(--texto-2); }
+.pasos b { color: var(--texto); }

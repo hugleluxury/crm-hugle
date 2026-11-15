@@ -2,3 +2,7 @@
 *.bat text eol=crlf
 *.wasm binary
 *.png binary
+*.parte1 binary
+*.parte2 binary
+*.parte3 binary
+*.parte4 binary

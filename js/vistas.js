@@ -2,7 +2,7 @@
 import * as db from './db.js';
 import {
   $, $$, esc, dinero, numero, fecha, fechaHora, hace, dias, hoyISO, avatar, icono, aviso, modal, confirmar, datosForm,
-  descargar, elegirArchivo, leerCSV, aCSV, normTel, rellenar, enlaceWhatsApp,
+  descargar, elegirArchivo, leerCSV, aCSV, normTel, rellenar, enlaceWhatsApp, enlaceCorreo,
 } from './util.js';
 import {
   ORIGENES, TIPOS_TAREA, TIPOS_ACTIVIDAD, SEGMENTOS, pendientesDeHoy, resultados as calcResultados, buscarDuplicado, registrar,
@@ -198,7 +198,7 @@ export async function ficha(el, ctx) {
         <div class="fila">${etiquetaSeg(c._segmento)}<span class="etiqueta azul">${c._puntuacion} puntos</span>${(c.etiquetas || []).map((t) => `<span class="etiqueta">${esc(t)}</span>`).join('')}${c.archivado ? '<span class="etiqueta rojo">Archivado</span>' : ''}</div>
         <div class="fila">
           ${c.telefono ? `<a class="btn peq" href="tel:${esc(normTel(c.telefono))}">${icono('tel')}Llamar</a><button class="btn peq" id="wa">${icono('whatsapp')}WhatsApp</button>` : ''}
-          ${c.email ? `<a class="btn peq" href="mailto:${esc(c.email)}">${icono('mail')}Email</a>` : ''}
+          ${c.email ? `<a class="btn peq" href="${esc(enlaceCorreo(c.email))}" target="_blank" rel="noopener">${icono('mail')}Email</a>` : ''}
           <button class="btn peq grad" id="ia-resumen">${icono('ia')}Resumen IA</button>
         </div>
         <div class="resultado oculto" id="ia-salida"></div>
@@ -489,7 +489,7 @@ export async function enviarPlantilla(ctx, c, canal = 'whatsapp', textoInicial =
     alGuardar: async (form) => {
       const texto = form.querySelector('#txt-pl').value.trim();
       if (!texto) { aviso('Escribe el mensaje'); return false; }
-      const url = canal === 'email' ? `mailto:${c.email}?body=${encodeURIComponent(texto)}` : enlaceWhatsApp(c.telefono, texto);
+      const url = canal === 'email' ? enlaceCorreo(c.email, { cuerpo: texto }) : enlaceWhatsApp(c.telefono, texto);
       window.open(url, '_blank', 'noopener');
       await registrar(c.id, canal === 'email' ? 'email' : 'mensaje', texto);
     },

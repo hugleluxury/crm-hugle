@@ -19,7 +19,8 @@ CRM HUGLE es una de las tres aplicaciones de **HUGLE PLATFORM 2.0** y la única 
 
 - **Tus datos no salen de tu dispositivo.** Todo se guarda en tu navegador (IndexedDB). La cuenta HUGLE solo sirve para entrar: tus clientes no pasan por ningún servidor.
 - **3 agentes de IA especializados en tu sector:** ventas, atención al cliente y fidelización.
-- **IA local incluida: HGLmini1.1flash.** Se descarga una vez (192 MB) y funciona sin conexión, en el propio dispositivo.
+- **IA local incluida: HGLmini1.1flash.** Viene dentro de la app: se instala sola la primera vez que abres el CRM y desde ahí funciona **sin ninguna conexión a internet**, en el propio dispositivo.
+- **Conexiones fáciles:** WhatsApp, correo (Gmail, Outlook o tu app), calendario e importar contactos, cada una con su explicación paso a paso en **Ajustes → Conexiones**.
 - **Funciona en portátil y móvil.** Se instala como una app desde el navegador (Chrome, Edge, Safari), sin tiendas.
 - **Sin instalar nada técnico.** Ni Docker, ni bases de datos, ni claves de API.
 
@@ -37,6 +38,7 @@ CRM HUGLE es una de las tres aplicaciones de **HUGLE PLATFORM 2.0** y la única 
 | **Plantillas** | Mensajes con variables (`{{nombre}}`, `{{negocio}}`, `{{yo}}`, `{{fecha}}`…) que se abren listos en WhatsApp o en el correo. Tú decides si los envías. |
 | **Agentes IA** | Marco (ventas), Nora (atención al cliente) e Iris (fidelización), con memoria, habilidades, rutinas y Bandeja de avisos (ver abajo). |
 | **HGLmini1.1flash** | Redactar mensajes, clasificar mensajes de clientes y sacar contactos de un texto (ver abajo). |
+| **Conexiones** | **WhatsApp** (tu número, prefijo de país y tu enlace para captar clientes), **correo** (Gmail, Outlook o la app del dispositivo, con firma), **calendario** (tareas a Google Calendar, iPhone u Outlook con aviso) e **importar contactos** (Google, iPhone, Excel, Shopify, WooCommerce, Outlook). Sin claves ni servidores. |
 | **Tu marca** | Nombre del negocio, color y logo. Tema claro y oscuro. |
 | **Copias de seguridad** | Descarga y restaura todos tus datos en un archivo. Sirve también para pasar el CRM a otro dispositivo. |
 | **Datos de ejemplo** | Pruébalo con un negocio ficticio y bórralo con un clic. |
@@ -52,7 +54,7 @@ CRM HUGLE es una de las tres aplicaciones de **HUGLE PLATFORM 2.0** y la única 
 - **Especializados por sector** (Ajustes → Tu negocio): tienda online, hostelería, clínica y estética, peluquería, inmobiliaria, servicios profesionales, reformas, academia, gimnasio o general. El sector cambia el **ciclo de compra** (cuándo un cliente pasa a estar «en riesgo»: 30 días en un gimnasio, un año en una inmobiliaria), las etapas sugeridas del embudo, las preguntas frecuentes que conviene tener respondidas y los consejos de cada agente. Puedes cambiarles el nombre.
 - **Proponen, tú apruebas.** Cuando ven algo que hacer (seguimientos, reactivaciones, reseñas…) te proponen tareas con un botón de aprobar. Nunca envían mensajes por su cuenta.
 - **Se pasan el trabajo.** Si le pides a Marco algo de fidelización, se lo encarga a Iris y te trae la respuesta.
-- **Funcionan sin descargar la IA** (con reglas); con HGLmini1.1flash activa entienden peticiones más libres.
+- **Funcionan aunque la IA esté apagada** (con reglas); con HGLmini1.1flash encendida entienden peticiones más libres.
 
 Ideas tomadas de [Hermes Agent](https://github.com/nousresearch/hermes-agent) (Nous Research, MIT) y adaptadas a un CRM local:
 
@@ -105,8 +107,8 @@ HGLmini1.1flash funciona **dentro del navegador** con WebAssembly (y WebGPU si e
 
 - **Modelo base:** [MNN-Pocket-0.3B Instruct](https://huggingface.co/taobao-mnn/MNN-Pocket-0.3B-GGUF) (Alibaba / Taobao, Apache-2.0), cuantizado Q4_1: **192 MB**, contexto de 32K.
 - **Motor:** [wllama](https://github.com/ngxson/wllama) (llama.cpp en WebAssembly, MIT), incluido en `vendor/`.
-- La primera vez se descarga desde Hugging Face y queda guardado en el navegador. Después funciona **sin conexión**.
-- También puedes cargar un archivo `.gguf` desde tu equipo o cambiar el origen del modelo en **Ajustes → IA**.
+- **Viene incluido en la app** (carpeta `modelo/`, en 4 partes de 48 MB). La primera vez que abres el CRM se instala solo en el dispositivo; después funciona **sin conexión a internet**, también tras cerrar el navegador o reiniciar.
+- También puedes cargar un archivo `.gguf` desde tu equipo o usar otro modelo en **Ajustes → Opciones de la IA → Avanzado**.
 
 ### Qué hace
 
@@ -122,7 +124,7 @@ HGLmini1.1flash funciona **dentro del navegador** con WebAssembly (y WebGPU si e
 
 Un modelo de 0,3B parámetros es rapidísimo, privado y cabe en un móvil, pero se equivoca a menudo, y MNN-Pocket está entrenado sobre todo en inglés y chino. Por eso cada función combina **reglas en español** (resultado seguro), **el modelo** (enruta preguntas, desempata clasificaciones dudosas, completa extracciones y, si lo pides, escribe borradores) y **validación** de su respuesta: si la IA no devuelve algo fiable, se usa el resultado de las reglas. Así el CRM nunca te da una respuesta inventada sobre tus clientes.
 
-Si cambias el modelo por otro GGUF pequeño con mejor español (Ajustes → IA → origen del modelo), el mismo código aprovecha más la IA automáticamente.
+Si cambias el modelo por otro GGUF pequeño con mejor español (Ajustes → Opciones de la IA → Avanzado), el mismo código aprovecha más la IA automáticamente.
 
 **Requisitos de la IA:** navegador actual (Chrome, Edge, Safari 17+, Firefox) y unos 600 MB de memoria libre. En móviles antiguos puede tardar más.
 
@@ -130,7 +132,7 @@ Si cambias el modelo por otro GGUF pequeño con mejor español (Ajustes → IA �
 
 - Los datos se guardan solo en el navegador del dispositivo (IndexedDB). Si borras los datos del navegador, se borran: **haz copias de seguridad** desde Ajustes.
 - El CRM pide al navegador almacenamiento persistente para que no se borre solo.
-- Conexiones externas: la comprobación de tu cuenta HUGLE al abrir (solo tu sesión, sin datos de clientes), la descarga del modelo de IA desde Hugging Face (la primera vez; puedes cargar el `.gguf` desde un archivo) y, solo con BUSINESS HUGLE, las órdenes de la Jefa de personal y sus informes (sin teléfonos ni correos).
+- Conexiones externas: la comprobación de tu cuenta HUGLE al abrir (solo tu sesión, sin datos de clientes), la instalación de la IA desde la propia app (solo la primera vez) y, solo con BUSINESS HUGLE, las órdenes de la Jefa de personal y sus informes (sin teléfonos ni correos).
 - Sin analítica ni cookies de seguimiento.
 
 ## Estructura del código
@@ -150,16 +152,19 @@ js/vistas-agentes.js  · pantallas de agentes, Bandeja y Jefa de personal
 js/sectores.js        · sectores: ciclo de compra, etapas, preguntas frecuentes y consejos
 js/plataforma.js      · cuenta HUGLE (acceso desde el Control Center) y órdenes de la Jefa
 js/config.js          · direcciones de la plataforma y acceso con cuenta
-js/ia.js              · motor de la IA (wllama) y descarga/caché del modelo
+js/ia.js              · motor de la IA (wllama) e instalación del modelo incluido
+js/conexiones.js      · Ajustes → Conexiones: WhatsApp, correo, calendario e importar contactos
 js/herramientas-ia.js · tareas de IA híbridas (enrutador, clasificador, extractor, redacción)
 sw.js                 · funcionamiento sin conexión y COOP/COEP
 servidor.mjs          · servidor local opcional (Node, sin dependencias)
 vendor/wllama/        · wllama 3.8.1 (MIT)
+vendor/wllama-compat/ · modo compatible de wllama para Safari y navegadores sin JSPI (MIT)
+modelo/               · el modelo de IA incluido (Apache-2.0), en 4 partes
 ```
 
 ## Hoja de ruta
 
-- Conexión opcional con WhatsApp Business, Shopify y email.
+- Conexión directa con la API de WhatsApp Business y Shopify.
 - Sincronización cifrada entre dispositivos.
 - Más habilidades por sector y plantillas de campaña.
 - Modelo HGLmini ajustado en español.
@@ -169,7 +174,7 @@ vendor/wllama/        · wllama 3.8.1 (MIT)
 ## Créditos y licencias
 
 - **CRM HUGLE** · © 2026 HUGLE · [MIT](LICENSE).
-- **MNN-Pocket-0.3B** · Alibaba Taobao MNN · Apache-2.0 (se descarga aparte; no se incluye en este repositorio). Ver [NOTICE](NOTICE).
+- **MNN-Pocket-0.3B** · Alibaba Taobao MNN · Apache-2.0 (`modelo/LICENSE`), incluido sin modificar en `modelo/`. Ver [NOTICE](NOTICE).
 - **wllama** · © Xuan Son Nguyen · MIT (`vendor/wllama/LICENSE`), sobre **llama.cpp** (MIT).
 - La memoria, las habilidades, las rutinas y la búsqueda en conversaciones de los agentes se inspiran en [Hermes Agent](https://github.com/nousresearch/hermes-agent) (Nous Research, MIT). No se ha copiado su código.
 - Algunas ideas de producto (importación de CSV con vista previa, panel de resultados frente al periodo anterior, alertas de leads en silencio, PWA instalable) se inspiran en [Vocero CRM](https://github.com/kevinrivm/vocero-crm) (MIT). No se ha copiado su código.

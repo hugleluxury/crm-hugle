@@ -2,13 +2,14 @@
 import * as db from './db.js';
 import { $, $$, aviso, modal, icono, region } from './util.js';
 import { cargarTodo, pendientesDeHoy, PLANTILLAS_INICIALES } from './negocio.js';
-import { alCambiarIA, encender, enCache, estadoIA } from './ia.js';
+import { alCambiarIA, encender, enCache, estadoIA, instalar } from './ia.js';
+import { aplicarConexiones } from './conexiones.js';
 import * as V from './vistas.js';
 import * as VIA from './vistas-ia.js';
 import { comprobarAcceso, recogerOrdenes } from './plataforma.js';
 import { revisarRutinas } from './agentes.js';
 
-export const VERSION = '1.1.0';
+export const VERSION = '1.2.0';
 
 const RUTAS = {
   inicio: { titulo: 'Inicio', pintar: V.inicio },
@@ -91,6 +92,7 @@ async function aplicarMarca() {
   $('#marca-nombre').textContent = nombre || 'CRM HUGLE';
   $('#marca-logo').src = logo || 'img/logo.svg';
   region.moneda = moneda || 'EUR';
+  await aplicarConexiones();
   const raiz = document.documentElement.style;
   if (color) { raiz.setProperty('--marca', color); raiz.setProperty('--marca-2', color); } else { raiz.removeProperty('--marca'); raiz.removeProperty('--marca-2'); }
 }
@@ -142,8 +144,8 @@ async function arrancar() {
   });
 
   alCambiarIA((s) => {
-    const txt = { apagada: 'Apagada · pulsa para activar', descargando: `Descargando ${s.progreso}%`, cargando: 'Preparando…', lista: 'Activa en este dispositivo', error: 'Error · pulsa para ver' }[s.fase];
-    const clase = { lista: 'ok', descargando: 'va', cargando: 'va', error: 'mal' }[s.fase] || '';
+    const txt = { apagada: 'Apagada · pulsa para activar', instalando: `Instalando ${s.progreso}%`, descargando: `Descargando ${s.progreso}%`, cargando: 'Preparando…', lista: 'Activa en este dispositivo', error: 'Error · pulsa para ver' }[s.fase];
+    const clase = { lista: 'ok', instalando: 'va', descargando: 'va', cargando: 'va', error: 'mal' }[s.fase] || '';
     $('#chip-ia-txt').innerHTML = `<i class="punto ${clase}"></i> ${txt}`;
   });
 
@@ -153,17 +155,20 @@ async function arrancar() {
   setInterval(trabajoDeFondo, 60000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) trabajoDeFondo(); });
 
-  // Si el modelo ya está descargado y el usuario lo dejó encendido, se carga solo.
-  if ((await db.ajuste('iaAuto', true)) && (await db.ajuste('iaUsada')) && (await enCache((await db.ajuste('iaModelo')) || undefined))) {
-    encender((await db.ajuste('iaModelo')) || undefined).catch(() => {});
-  }
+  // La IA viene incluida en la app: la primera vez se instala sola en el dispositivo y, desde ahí,
+  // se enciende al abrir el CRM y funciona sin conexión (se puede desactivar en Ajustes).
+  setTimeout(async () => {
+    const origen = (await db.ajuste('iaModelo')) || undefined;
+    if (!origen) await instalar().catch(() => {});
+    if ((await db.ajuste('iaAuto', true)) !== false && (await enCache(origen))) encender(origen).catch(() => {});
+  }, 2500);
 
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     // El service worker añade COOP/COEP: una sola recarga deja la página aislada y la IA puede usar varios hilos.
     const aislar = () => {
       let recargado = false;
       try { recargado = sessionStorage.getItem('crm-coi') === '1'; } catch {}
-      if (!self.crossOriginIsolated && navigator.serviceWorker.controller && !recargado && estadoIA().fase === 'apagada' && !document.querySelector('dialog[open]')) {
+      if (!self.crossOriginIsolated && navigator.serviceWorker.controller && !recargado && ['apagada', 'instalando'].includes(estadoIA().fase) &&!document.querySelector('dialog[open]')) {
         try { sessionStorage.setItem('crm-coi', '1'); } catch {}
         location.reload();
       }

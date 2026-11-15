@@ -142,7 +142,48 @@ export function rellenar(texto, vars) {
   return String(texto || '').replace(/\{\{\s*(\w+)\s*\}\}/g, (m, k) => (vars[k] ?? m));
 }
 
+// Conexiones (Ajustes → Conexiones): prefijo de país para WhatsApp y cómo se abre el correo.
+export const conexion = { prefijo: '34', correoVia: 'app', firma: '' };
+
 export function enlaceWhatsApp(tel, texto) {
-  const n = normTel(tel).replace('+', '');
-  return `https://wa.me/${n}?text=${encodeURIComponent(texto || '')}`;
+  let n = normTel(tel);
+  // Números sin prefijo internacional (p. ej. 612 345 678): se les pone el de tu país.
+  if (n && !n.startsWith('+') && n.length <= 10 && conexion.prefijo) n = conexion.prefijo + n.replace(/^0+/, '');
+  return `https://wa.me/${n.replace('+', '')}${texto ? `?text=${encodeURIComponent(texto)}` : ''}`;
+}
+
+// Abre un correo nuevo con la app de correo del dispositivo, Gmail u Outlook (según Conexiones).
+export function enlaceCorreo(email, { asunto = '', cuerpo = '' } = {}) {
+  const texto = conexion.firma && cuerpo ? `${cuerpo}\n\n${conexion.firma}` : cuerpo;
+  const q = (o) => Object.entries(o).filter(([, v]) => v).map(([k, v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  if (conexion.correoVia === 'gmail') return `https://mail.google.com/mail/?${q({ view: 'cm', fs: '1', to: email, su: asunto, body: texto })}`;
+  if (conexion.correoVia === 'outlook') return `https://outlook.office.com/mail/deeplink/compose?${q({ to: email, subject: asunto, body: texto })}`;
+  const p = q({ subject: asunto, body: texto });
+  return `mailto:${email}${p ? '?' + p : ''}`;
+}
+
+// Calendario: archivo .ics (Google Calendar, iPhone/Mac, Outlook) a partir de tareas con fecha.
+export function archivoICS(eventos, nombre = 'CRM HUGLE') {
+  const l = (s) => String(s || '').replace(/[\\;,]/g, (c) => '\\' + c).replace(/\n/g, '\\n');
+  const sello = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
+  const filas = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//HUGLE//CRM HUGLE//ES', 'CALSCALE:GREGORIAN', `X-WR-CALNAME:${l(nombre)}`];
+  for (const ev of eventos) {
+    const dia = ev.fecha.replace(/-/g, '');
+    filas.push('BEGIN:VEVENT', `UID:${ev.id}@crm-hugle`, `DTSTAMP:${sello}`);
+    if (ev.hora) {
+      const [h, m] = ev.hora.split(':');
+      const ini = `${dia}T${h.padStart(2, '0')}${(m || '00').padStart(2, '0')}00`;
+      const fin = new Date(+ev.fecha.slice(0, 4), +ev.fecha.slice(5, 7) - 1, +ev.fecha.slice(8, 10), +h, +(m || 0) + 30);
+      const f2 = `${fin.getFullYear()}${String(fin.getMonth() + 1).padStart(2, '0')}${String(fin.getDate()).padStart(2, '0')}T${String(fin.getHours()).padStart(2, '0')}${String(fin.getMinutes()).padStart(2, '0')}00`;
+      filas.push(`DTSTART:${ini}`, `DTEND:${f2}`);
+    } else {
+      const sig = new Date(+ev.fecha.slice(0, 4), +ev.fecha.slice(5, 7) - 1, +ev.fecha.slice(8, 10) + 1);
+      filas.push(`DTSTART;VALUE=DATE:${dia}`, `DTEND;VALUE=DATE:${sig.getFullYear()}${String(sig.getMonth() + 1).padStart(2, '0')}${String(sig.getDate()).padStart(2, '0')}`);
+    }
+    filas.push(`SUMMARY:${l(ev.titulo)}`);
+    if (ev.nota) filas.push(`DESCRIPTION:${l(ev.nota)}`);
+    filas.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${l(ev.titulo)}`, 'TRIGGER:-PT15M', 'END:VALARM', 'END:VEVENT');
+  }
+  filas.push('END:VCALENDAR');
+  return filas.join('\r\n');
 }

@@ -10,6 +10,7 @@ import { AGENTES, IDS } from './agentes.js';
 import { SECTORES } from './sectores.js';
 import { cuenta, urlPanel, salir } from './plataforma.js';
 import { PLATAFORMA } from './config.js';
+import { tarjetaConexiones } from './conexiones.js';
 
 let controlador = null; // para detener la respuesta en curso
 const parar = () => { controlador?.abort(); controlador = null; };
@@ -19,25 +20,27 @@ function tarjetaIA(el, ctx) {
   el.innerHTML = `<div class="tarjeta pila">
     <div class="ia-cab"><img src="img/hglmini.svg" alt=""><div class="crece"><h2>${NOMBRE_IA}</h2><div class="tenue" id="ia-est">—</div></div><div id="ia-acc" class="fila"></div></div>
     <div class="progreso oculto" id="ia-prog"><i></i></div>
-    <p class="tenue" style="margin:0" id="ia-nota">La IA funciona dentro de este dispositivo: tus clientes nunca salen de aquí. La primera vez se descargan unos ${TAMANO_MB} MB (mejor con wifi); después funciona incluso sin conexión.</p>
+    <p class="tenue" style="margin:0" id="ia-nota">La IA viene incluida en el CRM y trabaja dentro de este dispositivo: tus clientes nunca salen de aquí. La primera vez que abres el CRM se instala sola (${TAMANO_MB} MB, una única vez); desde ese momento funciona sin conexión a internet.</p>
   </div>`;
   const pintar = async (s) => {
     if (!el.isConnected) return quitar();
     const est = $('#ia-est', el); const acc = $('#ia-acc', el); const prog = $('#ia-prog', el);
-    prog.classList.toggle('oculto', !['descargando', 'cargando'].includes(s.fase));
+    prog.classList.toggle('oculto', !['instalando', 'descargando', 'cargando'].includes(s.fase));
     prog.firstElementChild.style.width = (s.fase === 'cargando' ? 100 : s.progreso) + '%';
     if (s.fase === 'lista') {
       est.innerHTML = `<i class="punto ok"></i> Activa · ${s.gpu ? 'WebGPU' : `${s.hilos} ${s.hilos === 1 ? 'hilo' : 'hilos'} de CPU`}`;
       acc.innerHTML = `<button class="btn peq" id="ia-off">Apagar</button>`;
       $('#ia-off', el).onclick = () => apagar();
+    } else if (s.fase === 'instalando') {
+      est.innerHTML = `<i class="punto va"></i> Instalando la IA en este dispositivo… ${s.progreso} %`; acc.innerHTML = '';
     } else if (s.fase === 'descargando') {
       est.innerHTML = `<i class="punto va"></i> Descargando… ${s.progreso} %`; acc.innerHTML = '';
     } else if (s.fase === 'cargando') {
       est.innerHTML = '<i class="punto va"></i> Preparando la IA…'; acc.innerHTML = '';
     } else {
       const guardada = await enCache((await db.ajuste('iaModelo')) || MODELO_POR_DEFECTO);
-      est.innerHTML = s.fase === 'error' ? `<i class="punto mal"></i> ${esc(s.error)}` : `<i class="punto"></i> ${guardada ? 'Descargada · apagada' : 'Sin descargar'}`;
-      acc.innerHTML = `<button class="btn grad" id="ia-on">${icono('ia')}${guardada ? 'Activar' : `Descargar y activar (${TAMANO_MB} MB)`}</button>`;
+      est.innerHTML = s.fase === 'error' ? `<i class="punto mal"></i> ${esc(s.error)}` : `<i class="punto"></i> ${guardada ? 'Instalada · apagada (funciona sin internet)' : 'Pendiente de instalar'}`;
+      acc.innerHTML = `<button class="btn grad" id="ia-on">${icono('ia')}${guardada ? 'Activar' : 'Instalar y activar'}</button>`;
       $('#ia-on', el).onclick = () => activar();
     }
   };
@@ -56,9 +59,9 @@ export async function activar() {
 async function asegurarIA() {
   if (iaLista()) return true;
   const s = estadoIA();
-  if (s.fase === 'descargando' || s.fase === 'cargando') { aviso('La IA se está preparando…'); await encender().catch(() => {}); return iaLista(); }
-  const guardada = await enCache((await db.ajuste('iaModelo')) || MODELO_POR_DEFECTO);
-  if (!guardada && !(await confirmar(`Para usar la IA hay que descargarla una vez (${TAMANO_MB} MB). Después funciona sin conexión. ¿Descargar ahora?`, 'Descargar'))) return false;
+  if (['instalando', 'descargando', 'cargando'].includes(s.fase)) { aviso('La IA se está preparando…'); await encender((await db.ajuste('iaModelo')) || MODELO_POR_DEFECTO).catch(() => {}); return iaLista(); }
+  const origen = await db.ajuste('iaModelo');
+  if (origen && !(await enCache(origen)) && !(await confirmar('Para usar el modelo que has elegido hay que descargarlo una vez. ¿Descargar ahora?', 'Descargar'))) return false;
   await activar();
   return iaLista();
 }
@@ -74,7 +77,7 @@ export async function asistente(el, ctx) {
   tarjetaIA($('#ia-tarjeta', el), ctx);
   const det = el.querySelector('.tarjeta-ia');
   det.addEventListener('toggle', () => { ctx.verIA = det.open; });
-  const quitarMini = alCambiarIA((s) => { const m = $('#ia-mini', el); if (m) m.innerHTML = s.fase === 'lista' ? '<i class="punto ok"></i> activa' : s.fase === 'descargando' ? `<i class="punto va"></i> ${s.progreso} %` : '<i class="punto"></i> apagada (los agentes funcionan igual con reglas)'; });
+  const quitarMini = alCambiarIA((s) => { const m = $('#ia-mini', el); if (m) m.innerHTML = s.fase === 'lista' ? '<i class="punto ok"></i> activa' : ['instalando', 'descargando'].includes(s.fase) ? `<i class="punto va"></i> instalando ${s.progreso} %` : s.fase === 'cargando' ? '<i class="punto va"></i> preparando…' : '<i class="punto"></i> apagada (los agentes funcionan igual con reglas)'; });
   const limpiar = ctx.limpiar; ctx.limpiar = () => { quitarMini(); limpiar?.(); };
   $$('[data-p]', el).forEach((b) => b.addEventListener('click', () => { parar(); ctx.pestanaIA = b.dataset.p; ctx.pintar(); }));
   const panel = $('#ia-panel', el);
@@ -249,13 +252,14 @@ export async function ajustes(el, ctx) {
       ${cta ? `<p style="margin:0"><b>${esc(cta.nombre || cta.email)}</b> · ${esc(cta.email)}</p><div class="fila">${['crm', 'studio', 'business'].map((x) => `<span class="etiqueta ${cta.apps.includes(x) ? 'verde' : ''}">${x.toUpperCase()} HUGLE${cta.apps.includes(x) ? '' : ' · sin activar'}</span>`).join('')}</div>` : ''}
       <p class="tenue" style="margin:0">La cuenta solo sirve para entrar y para las apps de pago. Tus clientes no salen de este dispositivo.</p>
       <div class="fila"><a class="btn" href="${urlPanel()}">Abrir mi Control Center</a><button class="btn fant" id="b-salir">Cerrar sesión</button></div></div>` : ''}
+    <div id="con-tarjeta"></div>
     <div id="ia-tarjeta"></div>
     <div class="tarjeta pila"><h2>Opciones de la IA</h2>
-      <label class="fila"><input type="checkbox" id="ia-auto" ${a.iaAuto !== false ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--marca)"> Activarla sola al abrir el CRM (si ya está descargada)</label>
-      <div class="fila"><button class="btn peq" id="b-gguf">${icono('subir')}Cargar un archivo .gguf</button><button class="btn peq peligro" id="b-borrar-ia">${icono('papelera')}Borrar IA descargada</button></div>
-      <details><summary class="tenue" style="cursor:pointer">Avanzado: origen del modelo</summary>
-        <div class="pila" style="margin-top:10px"><input class="entrada mono" id="ia-url" value="${esc(a.iaModelo || MODELO_POR_DEFECTO)}"><div class="fila"><button class="btn peq" id="b-url">Guardar origen</button><button class="btn fant peq" id="b-url-x">Por defecto</button></div>
-        <p class="tenue" style="margin:0">Cualquier GGUF pequeño (≤ 2 GB, ideal &lt; 1 GB) compatible con llama.cpp. Por defecto, MNN-Pocket-0.3B Instruct Q4_1 (Apache-2.0).</p></div></details>
+      <label class="fila"><input type="checkbox" id="ia-auto" ${a.iaAuto !== false ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--marca)"> Encenderla sola al abrir el CRM</label>
+      <div class="fila"><button class="btn peq" id="b-gguf">${icono('subir')}Cargar un archivo .gguf</button><button class="btn peq peligro" id="b-borrar-ia">${icono('papelera')}Desinstalar la IA</button></div>
+      <details><summary class="tenue" style="cursor:pointer">Avanzado: usar otro modelo</summary>
+        <div class="pila" style="margin-top:10px"><input class="entrada mono" id="ia-url" value="${esc(a.iaModelo || '')}" placeholder="Modelo incluido (${NOMBRE_IA}) · o una URL https a un .gguf"><div class="fila"><button class="btn peq" id="b-url">Guardar origen</button><button class="btn fant peq" id="b-url-x">Usar el incluido</button></div>
+        <p class="tenue" style="margin:0">Cualquier GGUF pequeño (≤ 2 GB, ideal &lt; 1 GB) compatible con llama.cpp; se descarga de internet una vez. El modelo incluido es MNN-Pocket-0.3B Instruct Q4_1 (Apache-2.0) y no necesita conexión.</p></div></details>
     </div>
 
     <div class="tarjeta"><div class="fila entre"><h2>Conocimiento del negocio</h2><button class="btn peq" id="b-qa">${icono('mas')}Añadir</button></div>
@@ -272,6 +276,7 @@ export async function ajustes(el, ctx) {
   </div></div>`;
 
   tarjetaIA($('#ia-tarjeta', el), ctx);
+  tarjetaConexiones($('#con-tarjeta', el), ctx);
 
   // Negocio y marca
   const fneg = $('#f-neg', el);
@@ -332,7 +337,7 @@ export async function ajustes(el, ctx) {
     if (!f) return;
     try { await encenderDesdeArchivo(f); aviso('Modelo cargado desde el archivo'); } catch (e) { aviso('No se pudo cargar: ' + e.message); }
   });
-  $('#b-borrar-ia', el).addEventListener('click', async () => { if (await confirmar(`¿Borrar ${NOMBRE_IA} de este dispositivo? Tendrás que volver a descargarla (${TAMANO_MB} MB) para usarla.`)) { await borrarModelo(); aviso('IA borrada'); ctx.pintar(); } });
+  $('#b-borrar-ia', el).addEventListener('click', async () => { if (await confirmar(`¿Desinstalar ${NOMBRE_IA} de este dispositivo? Liberas ${TAMANO_MB} MB; se volverá a instalar sola la próxima vez que abras el CRM con conexión.`, 'Desinstalar')) { await borrarModelo(); await db.fijar('iaAuto', false); aviso('IA desinstalada'); ctx.pintar(); } });
   $('#b-url', el).addEventListener('click', async () => { const u = $('#ia-url', el).value.trim(); if (!/^https?:\/\/.+\.gguf(\?.*)?$/i.test(u)) { aviso('Debe ser una URL https a un archivo .gguf'); return; } await db.fijar('iaModelo', u); await apagar(); aviso('Origen guardado'); });
   $('#b-url-x', el).addEventListener('click', async () => { await db.fijar('iaModelo', ''); await apagar(); ctx.pintar(); });
 
