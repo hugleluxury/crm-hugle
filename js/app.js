@@ -10,7 +10,7 @@ import { comprobarAcceso, recogerOrdenes, recogerWhatsApp } from './plataforma.j
 import { revisarRutinas } from './agentes.js';
 import { ofrecerInstalar } from './instalar-app.js';
 
-export const VERSION = '1.4.3';
+export const VERSION = '1.4.4';
 
 const RUTAS = {
   inicio: { titulo: 'Inicio', pintar: V.inicio },

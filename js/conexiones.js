@@ -102,7 +102,9 @@ const CONEXIONES = {
 async function estadoWA() {
   try {
     const s = (await conexionesPlataforma()).servicios.find((x) => x.id === 'whatsapp') || null;
-    await db.fijar('waConectado', !!s?.conectada); await db.fijar('waEstado', s);
+    // Guardar solo si cambia: cada escritura repinta la vista y, si no, Ajustes entraba en un bucle sin fin
+    if ((await db.ajuste('waConectado', false)) !== !!s?.conectada) await db.fijar('waConectado', !!s?.conectada);
+    if (JSON.stringify(await db.ajuste('waEstado', null)) !== JSON.stringify(s)) await db.fijar('waEstado', s);
     return s;
   } catch { return undefined; } // sin respuesta: se queda el último estado conocido
 }
