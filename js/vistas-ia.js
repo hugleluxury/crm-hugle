@@ -1,4 +1,4 @@
-// Pantallas de HGLmini1.2flash y de Ajustes.
+// Pantallas de HGL-mini2.0flash y de Ajustes.
 import * as db from './db.js';
 import { $, $$, esc, icono, aviso, modal, confirmar, datosForm, descargar, elegirArchivo, hoyISO } from './util.js';
 import { NOMBRE_IA, MODELO_POR_DEFECTO, TAMANO_MB, alCambiarIA, estadoIA, encender, encenderDesdeArchivo, apagar, borrarModelo, enCache, lista as iaLista } from './ia.js';

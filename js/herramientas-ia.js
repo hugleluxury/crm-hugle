@@ -1,4 +1,4 @@
-// HGLmini1.2flash · tareas de IA del CRM con diseño híbrido.
+// HGL-mini2.0flash · tareas de IA del CRM con diseño híbrido.
 // Un modelo de 0,3B parámetros es rapidísimo y privado, pero se equivoca a menudo y su español es limitado.
 // Por eso cada tarea combina: reglas en español (resultado seguro) + el modelo (enrutar, clasificar, personalizar)
 // + validación de lo que devuelve el modelo. Si la IA no da un resultado válido, se usa el de las reglas.

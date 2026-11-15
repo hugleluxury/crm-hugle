@@ -1,7 +1,7 @@
 {
   "name": "CRM HUGLE",
   "short_name": "CRM HUGLE",
-  "description": "CRM gratuito y de código abierto con IA local HGLmini1.2flash.",
+  "description": "CRM gratuito y de código abierto con IA local HGL-mini2.0flash.",
   "lang": "es",
   "start_url": "./#/inicio",
   "scope": "./",
@@ -15,6 +15,6 @@
   ],
   "shortcuts": [
     { "name": "Nuevo contacto", "url": "./#/contactos" },
-    { "name": "HGLmini1.2flash", "url": "./#/asistente" }
+    { "name": "HGL-mini2.0flash", "url": "./#/asistente" }
   ]
 }

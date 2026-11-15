@@ -1,6 +1,6 @@
-# Modelo de IA incluido (HGLmini1.2flash)
+# Modelo de IA incluido (HGL-mini2.0flash)
 
-**HGLmini1.2flash** es MNN-Pocket-0.3B-Instruct (Alibaba Taobao MNN, Apache-2.0, ver `LICENSE`) **destilado** para las tareas
+**HGL-mini2.0flash** es MNN-Pocket-0.3B-Instruct (Alibaba Taobao MNN, Apache-2.0, ver `LICENSE`) **destilado** para las tareas
 del CRM: un modelo maestro grande (Qwen3.6-35B-A3B, Apache-2.0) generó 3.617 ejemplos en español de España con los mismos
 prompts que usa la app (clasificar mensajes, sacar contactos, enrutar preguntas, elegir herramienta de los agentes,
 redactar WhatsApp y respuestas libres) y con ellos se ajustó el modelo entero. Se exporta en Q4_1, con **el mismo tamaño** que el original.
@@ -11,7 +11,7 @@ redactar WhatsApp y respuestas libres) y con ellos se ajustó el modelo entero. 
 
 ## Examen (327 casos que el modelo no vio al entrenar, % de respuestas que el CRM puede usar)
 
-| Tarea | HGLmini1.1flash | HGLmini1.2flash |
+| Tarea | HGLmini1.1flash (anterior) | HGL-mini2.0flash |
 |---|---|---|
 | Clasificar mensajes | 18,4 | 91,1 |
 | Sacar contactos | 22,5 | 88,3 |

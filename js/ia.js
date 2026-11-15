@@ -1,14 +1,14 @@
-// HGLmini1.2flash · la IA del CRM, ejecutada dentro del navegador (WebAssembly / WebGPU).
+// HGL-mini2.0flash · la IA del CRM, ejecutada dentro del navegador (WebAssembly / WebGPU).
 // Motor: wllama (llama.cpp en WebAssembly). Modelo: MNN-Pocket-0.3B Instruct (Apache-2.0) destilado en Kaggle con Qwen3.6-35B-A3B, Q4_1.
 // El modelo viene DENTRO de la app (carpeta modelo/, en 4 partes): se instala solo la primera vez que se abre
 // el CRM, queda guardado en el dispositivo y desde entonces la IA funciona sin ninguna conexión a internet.
 // Nada sale del dispositivo.
 import { Wllama, ModelManager } from '../vendor/wllama/wllama.js';
 
-export const NOMBRE_IA = 'HGLmini1.2flash';
+export const NOMBRE_IA = 'HGL-mini2.0flash';
 export const MODELO_POR_DEFECTO = 'incluido'; // el modelo que trae la app (también se admite una URL .gguf propia)
 export const TAMANO_MB = 192;
-// HGLmini1.2flash: MNN-Pocket-0.3B Instruct (Apache-2.0) destilado para las tareas del CRM, Q4_1, mismo tamaño; troceado en partes de 48 MB para alojarlo junto a la app.
+// HGL-mini2.0flash: MNN-Pocket-0.3B Instruct (Apache-2.0) destilado para las tareas del CRM, Q4_1, mismo tamaño; troceado en partes de 48 MB para alojarlo junto a la app.
 const MODELO = {
   version: 'hglmini-1.2-flash',
   partes: [1, 2, 3, 4].map((n) => new URL(`../modelo/hglmini-1.2-flash.parte${n}`, import.meta.url).href),
