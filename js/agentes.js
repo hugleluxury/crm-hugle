@@ -416,6 +416,7 @@ export async function revisarRutinas(cargar) {
       const res = await ejecutar(r.agente, r.instruccion, d, { delegar: true });
       await db.guardar('bandeja', { agente: r.agente, titulo: r.nombre, texto: res.texto, acciones: res.acciones, fecha: new Date().toISOString(), leida: false, origen: 'rutina' });
       await db.guardar('rutinas', { ...r, ultima: new Date().toISOString() });
+      import('./plataforma.js').then((p) => p.mandarInforme?.(r.nombre, res.texto || '')).catch(() => {});
       n++;
     }
     if (n && document.hidden && 'Notification' in self && Notification.permission === 'granted') {

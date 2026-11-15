@@ -101,6 +101,11 @@ const abreviar = (texto, d) => {
 };
 
 let sincronizando = false;
+// Informe para el panel Informes de HUGLE CORE (solo si la cuenta tiene CORE: ESTUDIO o BUSINESS)
+export async function mandarInforme(titulo, texto) {
+  if (!leer()?.sesion || !navigator.onLine || !(tieneApp('studio') || tieneApp('business'))) return false;
+  try { await api('/v1/equipo/informes', { metodo: 'POST', cuerpo: { app: 'crm', titulo: String(titulo).slice(0, 200), texto: String(texto).slice(0, 4000) }, tiempo: 15000 }); return true; } catch { return false; }
+}
 export async function recogerOrdenes(cargar) {
   if (sincronizando || !tieneApp('business') || !navigator.onLine) return 0;
   sincronizando = true;
