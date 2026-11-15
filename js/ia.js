@@ -1,18 +1,18 @@
-// HGLmini1.1flash · la IA del CRM, ejecutada dentro del navegador (WebAssembly / WebGPU).
-// Motor: wllama (llama.cpp en WebAssembly). Modelo base: MNN-Pocket-0.3B Instruct Q4_1 (Apache-2.0).
+// HGLmini1.2flash · la IA del CRM, ejecutada dentro del navegador (WebAssembly / WebGPU).
+// Motor: wllama (llama.cpp en WebAssembly). Modelo: MNN-Pocket-0.3B Instruct (Apache-2.0) destilado en Kaggle con Qwen3.6-35B-A3B, Q4_1.
 // El modelo viene DENTRO de la app (carpeta modelo/, en 4 partes): se instala solo la primera vez que se abre
 // el CRM, queda guardado en el dispositivo y desde entonces la IA funciona sin ninguna conexión a internet.
 // Nada sale del dispositivo.
 import { Wllama, ModelManager } from '../vendor/wllama/wllama.js';
 
-export const NOMBRE_IA = 'HGLmini1.1flash';
+export const NOMBRE_IA = 'HGLmini1.2flash';
 export const MODELO_POR_DEFECTO = 'incluido'; // el modelo que trae la app (también se admite una URL .gguf propia)
 export const TAMANO_MB = 192;
-// MNN-Pocket-0.3B Instruct Q4_1 (Apache-2.0), troceado en partes de 48 MB para alojarlo junto a la app.
+// HGLmini1.2flash: MNN-Pocket-0.3B Instruct (Apache-2.0) destilado para las tareas del CRM, Q4_1, mismo tamaño; troceado en partes de 48 MB para alojarlo junto a la app.
 const MODELO = {
-  version: 'hglmini-1.1-flash',
-  partes: [1, 2, 3, 4].map((n) => new URL(`../modelo/hglmini-1.1-flash.parte${n}`, import.meta.url).href),
-  bytes: 191896672,
+  version: 'hglmini-1.2-flash',
+  partes: [1, 2, 3, 4].map((n) => new URL(`../modelo/hglmini-1.2-flash.parte${n}`, import.meta.url).href),
+  bytes: 191896544,
 };
 const CACHE_MODELO = 'hglmini-modelo-' + MODELO.version;
 const esIncluido = (url) => !url || url === MODELO_POR_DEFECTO;
@@ -61,6 +61,8 @@ let instalando = null;
 export function instalar() {
   if (instalando) return instalando;
   instalando = (async () => {
+    // Borra versiones anteriores de la IA para no ocupar el doble.
+    try { for (const k of await caches.keys()) if (k.startsWith('hglmini-modelo-') && k !== CACHE_MODELO) await caches.delete(k); } catch {}
     if (await instalada()) return;
     if (navigator.storage?.persist) await navigator.storage.persist().catch(() => {});
     cambiar({ fase: 'instalando', progreso: 0, error: '' });

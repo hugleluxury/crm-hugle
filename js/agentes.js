@@ -1,6 +1,6 @@
 // Los 3 agentes IA del CRM (15-11-2026): Ventas, Atención al cliente y Fidelización.
 // Cada uno trabaja con los datos reales del CRM y con el sector del negocio (sectores.js), y comparte el motor
-// HGLmini1.1flash. Ideas tomadas de Hermes Agent (Nous Research, MIT) y adaptadas a un CRM local:
+// HGLmini1.2flash. Ideas tomadas de Hermes Agent (Nous Research, MIT) y adaptadas a un CRM local:
 //  · Memoria persistente que el agente usa al responder («recuerda que…»).
 //  · Habilidades: recetas con nombre que el usuario guarda desde una respuesta y que se activan con su frase.
 //  · Rutinas programadas (parte diario, revisión semanal) que dejan el resultado en la Bandeja.

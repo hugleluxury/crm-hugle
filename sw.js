@@ -1,6 +1,6 @@
 // CRM HUGLE · service worker: funciona sin conexión y activa el aislamiento entre orígenes
 // (COOP/COEP) para que la IA pueda usar varios hilos aunque el alojamiento no ponga esas cabeceras.
-const CACHE = 'crm-hugle-v1.2.0';
+const CACHE = 'crm-hugle-v1.3.0';
 const BASE = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/db.js', 'js/ia.js', 'js/util.js', 'js/negocio.js', 'js/vistas.js', 'js/vistas-ia.js', 'js/herramientas-ia.js',

@@ -9,7 +9,7 @@ import * as VIA from './vistas-ia.js';
 import { comprobarAcceso, recogerOrdenes } from './plataforma.js';
 import { revisarRutinas } from './agentes.js';
 
-export const VERSION = '1.2.0';
+export const VERSION = '1.3.0';
 
 const RUTAS = {
   inicio: { titulo: 'Inicio', pintar: V.inicio },
