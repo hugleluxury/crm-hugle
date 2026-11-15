@@ -99,12 +99,14 @@ const CONEXIONES = {
 };
 
 // WhatsApp Business automático (por la cuenta HUGLE): estado real en la API
+// Huella del estado de WhatsApp: solo lo que se ve (el orden de los campos cambia entre la API y lo guardado)
+const huellaWA = (s) => (s ? [s.conectada, s.disponible, s.perfil || ''].join('|') : '');
 async function estadoWA() {
   try {
     const s = (await conexionesPlataforma()).servicios.find((x) => x.id === 'whatsapp') || null;
     // Guardar solo si cambia: cada escritura repinta la vista y, si no, Ajustes entraba en un bucle sin fin
     if ((await db.ajuste('waConectado', false)) !== !!s?.conectada) await db.fijar('waConectado', !!s?.conectada);
-    if (JSON.stringify(await db.ajuste('waEstado', null)) !== JSON.stringify(s)) await db.fijar('waEstado', s);
+    if (huellaWA(await db.ajuste('waEstado', null)) !== huellaWA(s)) await db.fijar('waEstado', s);
     return s;
   } catch { return undefined; } // sin respuesta: se queda el último estado conocido
 }
@@ -127,7 +129,7 @@ export async function tarjetaConexiones(el, ctx, waFresco) {
   const m = location.hash.match(/conexion=whatsapp&(ok=1|error=([^&]*))/);
   if (m) { history.replaceState(null, '', location.pathname + location.search); aviso(m[2] ? 'WhatsApp: ' + decodeURIComponent(m[2]) : 'WhatsApp Business conectado'); }
   const wa = waFresco !== undefined ? waFresco : await db.ajuste('waEstado', null);
-  if (waFresco === undefined) estadoWA().then((n) => { if (n !== undefined && el.isConnected && JSON.stringify(n) !== JSON.stringify(wa)) tarjetaConexiones(el, ctx, n); });
+  if (waFresco === undefined) estadoWA().then((n) => { if (n !== undefined && el.isConnected && huellaWA(n) !== huellaWA(wa)) tarjetaConexiones(el, ctx, n); });
   CONEXIONES.wabusiness = {
     nombre: 'WhatsApp Business automático', icono: 'whatsapp',
     resumen: 'Tus agentes de IA leen y responden los WhatsApp de tus clientes.',
