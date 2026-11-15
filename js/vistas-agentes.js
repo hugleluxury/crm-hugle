@@ -19,15 +19,15 @@ function htmlAcciones(acciones = []) {
   if (!acciones.length) return '';
   const pend = acciones.filter((a) => !a.hecha).length;
   return `<div class="acciones-ag">
-    <div class="fila entre"><b>${acciones.length === 1 ? 'Te propongo 1 tarea' : `Te propongo ${acciones.length} tareas`}</b>${pend > 1 ? '<button type="button" class="btn peq prim" data-todas>Aprobar todas</button>' : ''}</div>
-    ${acciones.map((a, i) => `<div class="accion ${a.hecha ? 'hecha' : ''}" data-i="${i}">${icono(a.hecha ? 'check' : 'agenda')}<span class="crece">${esc(a.titulo)} <span class="tenue">· ${fecha(a.vence)}</span></span>${a.hecha ? '<span class="tenue">Creada</span>' : '<button type="button" class="btn peq" data-aprobar>Aprobar</button>'}</div>`).join('')}
+    <div class="fila entre"><b>${acciones.every((a) => a.tipo === 'whatsapp') ? 'Respuesta propuesta' : acciones.length === 1 ? 'Te propongo 1 tarea' : `Te propongo ${acciones.length} tareas`}</b>${pend > 1 ? '<button type="button" class="btn peq prim" data-todas>Aprobar todas</button>' : ''}</div>
+    ${acciones.map((a, i) => `<div class="accion ${a.hecha ? 'hecha' : ''}" data-i="${i}">${icono(a.hecha ? 'check' : 'agenda')}<span class="crece">${esc(a.titulo)} <span class="tenue">· ${fecha(a.vence)}</span></span>${a.hecha ? `<span class="tenue">${a.tipo === 'whatsapp' ? 'Enviada' : 'Creada'}</span>` : `<button type="button" class="btn peq" data-aprobar>${a.tipo === 'whatsapp' ? 'Enviar' : 'Aprobar'}</button>`}</div>`).join('')}
   </div>`;
 }
 // Engancha los botones; `guardar(acciones)` persiste el estado en su registro (chat o bandeja)
 function engancharAcciones(caja, acciones, guardar) {
   const aprobar = async (i) => { if (acciones[i].hecha) return; await aplicarAccion(acciones[i]); acciones[i].hecha = true; };
   caja.querySelectorAll('[data-aprobar]').forEach((b) => b.addEventListener('click', async () => {
-    await aprobar(Number(b.closest('[data-i]').dataset.i)); await guardar(acciones); aviso('Tarea creada en Agenda'); repintar();
+    await aprobar(Number(b.closest('[data-i]').dataset.i)); await guardar(acciones); aviso(acciones[Number(b.closest('[data-i]').dataset.i)].tipo === 'whatsapp' ? 'Respuesta enviada por WhatsApp' : 'Tarea creada en Agenda'); repintar();
   }));
   caja.querySelector('[data-todas]')?.addEventListener('click', async () => {
     for (let i = 0; i < acciones.length; i++) await aprobar(i);
@@ -229,7 +229,7 @@ export async function panelBandeja(el, ctx) {
   el.innerHTML = `<div class="fila entre" style="margin-bottom:12px"><span class="tenue">Lo que tus agentes hacen solos (rutinas) y las órdenes de la Jefa de personal.</span>
       <span class="fila"><button class="btn peq" id="b-rev">${icono('reloj')}Revisar rutinas ahora</button>${l.some((x) => !x.leida) ? '<button class="btn fant peq" id="b-leido">Marcar todo leído</button>' : ''}${l.length ? `<button class="btn fant peq" id="b-vaciar">${icono('papelera')}Vaciar</button>` : ''}</span></div>
     ${l.length ? l.map((x) => { const a = nombres[x.agente] || nombres.ventas; return `<div class="tarjeta pila aviso-ag ${x.leida ? '' : 'nuevo'}" data-b="${x.id}">
-      <div class="fila">${cara(a, 32)}<div class="crece"><b>${esc(x.titulo)}</b><div class="tenue">${esc(a.nombre)} · ${x.origen === 'jefa' ? 'orden de la Jefa' : 'rutina'} · ${fechaHora(x.fecha)}</div></div>${x.leida ? '' : '<span class="etiqueta azul">Nuevo</span>'}<button class="btn fant ico peq" data-x aria-label="Borrar">${icono('x')}</button></div>
+      <div class="fila">${cara(a, 32)}<div class="crece"><b>${esc(x.titulo)}</b><div class="tenue">${esc(a.nombre)} · ${x.origen === 'jefa' ? 'orden de la Jefa' : x.origen === 'whatsapp' ? 'WhatsApp' : 'rutina'} · ${fechaHora(x.fecha)}</div></div>${x.leida ? '' : '<span class="etiqueta azul">Nuevo</span>'}<button class="btn fant ico peq" data-x aria-label="Borrar">${icono('x')}</button></div>
       <div class="txt" style="white-space:pre-wrap;overflow-wrap:anywhere"></div>${htmlAcciones(x.acciones)}</div>`; }).join('')
     : `<div class="tarjeta vacio">${icono('reloj')}<div>Aún no hay avisos. Tus agentes dejarán aquí sus partes diarios.</div></div>`}`;
   for (const x of l) {

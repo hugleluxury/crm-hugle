@@ -6,7 +6,9 @@
 //    que el usuario diga lo contrario).
 import * as db from './db.js';
 import { PLATAFORMA } from './config.js';
-import { ejecutar, aplicarAccion, agente } from './agentes.js';
+import { ejecutar, aplicarAccion, agente, enviadores } from './agentes.js';
+import { clasificar } from './herramientas-ia.js';
+import { buscarDuplicado, registrar } from './negocio.js';
 
 const CLAVE = 'crm-cuenta';
 const leer = () => { try { return JSON.parse(localStorage.getItem(CLAVE) || 'null'); } catch { return null; } };
@@ -127,6 +129,47 @@ export async function recogerOrdenes(cargar) {
   } catch (e) {
     if (e.estado === 401) { escribir(null); location.reload(); }
   } finally { sincronizando = false; }
+  return n;
+}
+
+/* ───────── WhatsApp Business (conexión por HUGLE): los agentes leen y responden ───────── */
+// La API guarda cada WhatsApp entrante; aquí se recoge, se crea o encuentra el contacto, Nora (atención) lo clasifica y
+// redacta la respuesta en el dispositivo. Con «responder solo» activado se envía sin esperar (menos quejas y bajas, que
+// siempre esperan tu visto bueno); si no, queda en la Bandeja con un botón «Enviar».
+export const conexionesPlataforma = () => api('/v1/conexiones?app=crm');
+export const conectarPlataforma = (servicio) => api('/v1/conexiones/conectar', { metodo: 'POST', cuerpo: { servicio, volver: location.origin + location.pathname }, tiempo: 20000 });
+export const quitarPlataforma = (servicio) => api('/v1/conexiones/quitar', { metodo: 'POST', cuerpo: { servicio } });
+async function responderWA(conversacion, texto) { await api('/v1/whatsapp/responder', { metodo: 'POST', cuerpo: { conversacion, texto }, tiempo: 20000 }); }
+enviadores.whatsapp = async (a) => {
+  await responderWA(a.conversacion, a.texto);
+  if (a.contacto) await registrar(a.contacto, 'mensaje', `WhatsApp enviado: ${a.texto}`);
+};
+let leyendoWA = false;
+export async function recogerWhatsApp(cargar) {
+  if (/conexion=whatsapp&ok=1/.test(location.hash)) await db.fijar('waConectado', true);
+  if (leyendoWA || !navigator.onLine || !leer()?.sesion || !(await db.ajuste('waConectado', false))) return 0;
+  leyendoWA = true;
+  let n = 0;
+  try {
+    const { mensajes } = await api('/v1/whatsapp/entrantes');
+    if (!mensajes.length) return 0;
+    const auto = await db.ajuste('waAuto', false);
+    for (const m of mensajes) {
+      const d = await cargar();
+      let c = buscarDuplicado(d.contactos, { telefono: m.telefono });
+      if (!c) c = await db.guardar('contactos', { nombre: m.nombre || (m.telefono ? '+' + m.telefono.replace(/^\+/, '') : 'Cliente de WhatsApp'), telefono: m.telefono || '', origen: 'WhatsApp', etiquetas: ['whatsapp'] });
+      await registrar(c.id, 'mensaje', `WhatsApp recibido: ${m.texto}`, m.fecha);
+      const r = await clasificar(m.texto, c);
+      const accion = { tipo: 'whatsapp', titulo: `Responder a ${c.nombre}: «${r.respuesta.slice(0, 90)}${r.respuesta.length > 90 ? '…' : ''}»`, texto: r.respuesta, conversacion: m.conversacion, contacto: c.id, vence: new Date().toISOString().slice(0, 10) };
+      let enviada = false;
+      if (auto && !['queja', 'baja'].includes(r.intencion)) { try { await aplicarAccion(accion); accion.hecha = true; enviada = true; } catch {} }
+      await db.guardar('bandeja', { agente: 'atencion', titulo: `WhatsApp de ${c.nombre} · ${r.nombre}`, texto: `«${m.texto}»\n\n${enviada ? 'Nora ha respondido' : 'Nora propone responder'}: ${r.respuesta}`, acciones: [accion], fecha: new Date().toISOString(), leida: false, origen: 'whatsapp' });
+      n++;
+    }
+    await api('/v1/whatsapp/entrantes/recibidos', { metodo: 'POST', cuerpo: { ids: mensajes.map((m) => m.id) } });
+  } catch (e) {
+    if (e.estado === 401) { escribir(null); location.reload(); }
+  } finally { leyendoWA = false; }
   return n;
 }
 

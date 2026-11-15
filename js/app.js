@@ -6,7 +6,7 @@ import { alCambiarIA, encender, enCache, estadoIA, instalar } from './ia.js';
 import { aplicarConexiones } from './conexiones.js';
 import * as V from './vistas.js';
 import * as VIA from './vistas-ia.js';
-import { comprobarAcceso, recogerOrdenes } from './plataforma.js';
+import { comprobarAcceso, recogerOrdenes, recogerWhatsApp } from './plataforma.js';
 import { revisarRutinas } from './agentes.js';
 
 export const VERSION = '1.3.0';
@@ -70,7 +70,7 @@ ctx.contarBandeja = contarBandeja;
 
 // Trabajo en segundo plano de los agentes: rutinas programadas y órdenes de la Jefa de personal (BUSINESS)
 async function trabajoDeFondo() {
-  const n = (await revisarRutinas(ctx.recargar).catch(() => 0)) + (await recogerOrdenes(ctx.recargar).catch(() => 0));
+  const n = (await revisarRutinas(ctx.recargar).catch(() => 0)) + (await recogerOrdenes(ctx.recargar).catch(() => 0)) + (await recogerWhatsApp(ctx.recargar).catch(() => 0));
   if (n) { contarBandeja(); aviso(`Tus agentes han dejado ${n} ${n === 1 ? 'aviso' : 'avisos'} en la Bandeja`); }
 }
 

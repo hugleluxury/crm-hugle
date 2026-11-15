@@ -3,6 +3,7 @@
 import * as db from './db.js';
 import { $, esc, icono, aviso, modal, datosForm, descargar, hoyISO, fecha, conexion, enlaceWhatsApp, enlaceCorreo, archivoICS } from './util.js';
 import { importarCSV } from './vistas.js';
+import { conexionesPlataforma, conectarPlataforma, quitarPlataforma } from './plataforma.js';
 
 const PREFIJOS = [['34', 'España (+34)'], ['351', 'Portugal (+351)'], ['52', 'México (+52)'], ['57', 'Colombia (+57)'], ['54', 'Argentina (+54)'], ['56', 'Chile (+56)'], ['51', 'Perú (+51)'], ['593', 'Ecuador (+593)'], ['58', 'Venezuela (+58)'], ['1', 'EE. UU. (+1)'], ['44', 'Reino Unido (+44)'], ['33', 'Francia (+33)'], ['49', 'Alemania (+49)'], ['39', 'Italia (+39)']];
 const VIAS = { app: 'La app de correo del dispositivo', gmail: 'Gmail', outlook: 'Outlook / Hotmail' };
@@ -97,8 +98,38 @@ const CONEXIONES = {
   },
 };
 
+// WhatsApp Business automático (por la cuenta HUGLE): estado real en la API
+async function estadoWA() {
+  try { const s = (await conexionesPlataforma()).servicios.find((x) => x.id === 'whatsapp'); await db.fijar('waConectado', !!s?.conectada); return s || null; } catch { return null; }
+}
+function cuerpoWA(s, auto) {
+  return `<div class="pila">
+    <p class="tenue" style="margin:0">Conecta el número de <b>WhatsApp Business</b> de tu negocio y tus agentes leerán cada mensaje nuevo: Nora crea o encuentra el contacto, entiende qué quiere y prepara la respuesta. Tú la envías con un toque desde la Bandeja, o dejas que responda sola.</p>
+    ${pasos(['Pulsa <b>Conectar con Meta</b> y entra con la cuenta de Facebook que administra tu negocio.', 'Elige o registra el número de WhatsApp Business (si ya lo usas en el móvil, Meta te deja seguir usándolo).', 'Vuelve aquí: los mensajes nuevos aparecen en la <b>Bandeja</b> de tus agentes cada minuto con el CRM abierto.'])}
+    ${s?.conectada ? `<div class="aviso">Conectado · ${esc(s.perfil || 'WhatsApp Business')}</div>
+      <label class="opcion"><input type="checkbox" name="auto" ${auto ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--marca)"> Nora responde sola (las quejas y las bajas siempre esperan tu visto bueno)</label>
+      <div class="fila"><button type="button" class="btn peq" data-wa-quitar>Desconectar</button></div>`
+      : s && !s.disponible ? '<div class="aviso">La conexión automática de WhatsApp aún no está activada en HUGLE. Muy pronto.</div>'
+      : s ? `<div class="fila"><button type="button" class="btn peq prim" data-wa-conectar>${icono('whatsapp')}Conectar con Meta</button></div>`
+      : '<div class="aviso">Conéctate a internet para conectar WhatsApp Business.</div>'}</div>`;
+}
+
 export async function tarjetaConexiones(el, ctx) {
   const c = await leerConexiones();
+  const m = location.hash.match(/conexion=whatsapp&(ok=1|error=([^&]*))/);
+  if (m) { history.replaceState(null, '', location.pathname + location.search); aviso(m[2] ? 'WhatsApp: ' + decodeURIComponent(m[2]) : 'WhatsApp Business conectado'); }
+  const wa = await estadoWA();
+  CONEXIONES.wabusiness = {
+    nombre: 'WhatsApp Business automático', icono: 'whatsapp',
+    resumen: 'Tus agentes de IA leen y responden los WhatsApp de tus clientes.',
+    estado: () => (wa?.conectada ? `Conectado · ${wa.perfil || 'WhatsApp Business'}` : ''),
+    cuerpo: () => cuerpoWA(wa, c.wabusiness?.auto),
+    alAbrir: (d) => {
+      d.querySelector('[data-wa-conectar]')?.addEventListener('click', async () => { try { const r = await conectarPlataforma('whatsapp'); location.href = r.enlace; } catch (e) { aviso(e.message); } });
+      d.querySelector('[data-wa-quitar]')?.addEventListener('click', async () => { try { await quitarPlataforma('whatsapp'); await db.fijar('waConectado', false); aviso('WhatsApp desconectado'); d.close(); } catch (e) { aviso(e.message); } });
+    },
+    guardar: wa?.conectada ? (f) => ({ auto: !!f.auto }) : undefined,
+  };
   el.innerHTML = `<div class="tarjeta"><h2>Conexiones</h2>
     <p class="tenue">Conecta tus herramientas en un minuto. No hay claves ni servidores: el CRM abre tus apps con todo preparado y tú decides qué se envía.</p>
     <ul class="lista" style="margin:0 -18px -18px">${Object.entries(CONEXIONES).map(([k, x]) => {
@@ -116,6 +147,6 @@ async function abrir(k, ctx, repintar) {
     cuerpo: x.cuerpo(c, ctx),
     pie: x.guardar ? `<button type="button" class="btn" data-cerrar>Cancelar</button><button class="btn prim">Guardar</button>` : `<button type="button" class="btn" data-cerrar>Cerrar</button>`,
     alAbrir: (d) => { x.alAbrir?.(d, ctx); d.addEventListener('close', () => { aplicarConexiones(); repintar(); }); },
-    alGuardar: x.guardar ? async (form) => { await guardar(k, x.guardar(datosForm(form))); aviso(`${x.nombre}: guardado`); } : undefined,
+    alGuardar: x.guardar ? async (form) => { const v = x.guardar(datosForm(form)); await guardar(k, v); if (k === 'wabusiness') await db.fijar('waAuto', !!v.auto); aviso(`${x.nombre}: guardado`); } : undefined,
   });
 }

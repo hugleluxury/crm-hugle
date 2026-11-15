@@ -363,7 +363,10 @@ function consejo(yo, s, d) {
 }
 
 /* ───────────── Acciones propuestas: el usuario las aprueba ───────────── */
+// Quien sabe enviar cada tipo de acción fuera del dispositivo (plataforma.js registra «whatsapp»)
+export const enviadores = {};
 export async function aplicarAccion(a) {
+  if (a.tipo === 'whatsapp') { if (!enviadores.whatsapp) return false; await enviadores.whatsapp(a); return true; }
   if (a.tipo !== 'tarea') return false;
   await db.guardar('tareas', { titulo: a.titulo, tipo: a.tipoTarea || 'tarea', contacto: a.contacto || null, vence: a.vence || hoyISO(), hecha: false, origen: 'agente' });
   return true;
