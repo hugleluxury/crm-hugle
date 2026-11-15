@@ -8,8 +8,9 @@ import * as V from './vistas.js';
 import * as VIA from './vistas-ia.js';
 import { comprobarAcceso, recogerOrdenes, recogerWhatsApp } from './plataforma.js';
 import { revisarRutinas } from './agentes.js';
+import { ofrecerInstalar } from './instalar-app.js';
 
-export const VERSION = '1.3.0';
+export const VERSION = '1.4.1';
 
 const RUTAS = {
   inicio: { titulo: 'Inicio', pintar: V.inicio },
@@ -129,6 +130,7 @@ async function primeraVez() {
 async function arrancar() {
   await comprobarAcceso(); // sin cuenta HUGLE válida se queda en la pantalla de acceso
   await primeraVez();
+  ofrecerInstalar();
   await aplicarMarca();
   tema(document.documentElement.dataset.theme || 'dark');
 
