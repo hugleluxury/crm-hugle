@@ -100,7 +100,11 @@ const CONEXIONES = {
 
 // WhatsApp Business automático (por la cuenta HUGLE): estado real en la API
 async function estadoWA() {
-  try { const s = (await conexionesPlataforma()).servicios.find((x) => x.id === 'whatsapp'); await db.fijar('waConectado', !!s?.conectada); return s || null; } catch { return null; }
+  try {
+    const s = (await conexionesPlataforma()).servicios.find((x) => x.id === 'whatsapp') || null;
+    await db.fijar('waConectado', !!s?.conectada); await db.fijar('waEstado', s);
+    return s;
+  } catch { return undefined; } // sin respuesta: se queda el último estado conocido
 }
 function cuerpoWA(s, auto) {
   return `<div class="pila">
@@ -114,11 +118,14 @@ function cuerpoWA(s, auto) {
       : '<div class="aviso">Conéctate a internet para conectar WhatsApp Business.</div>'}</div>`;
 }
 
-export async function tarjetaConexiones(el, ctx) {
+// Se pinta al momento con el último estado guardado de WhatsApp (sin esperar a la API, que movía la columna
+// entera hacia abajo al llegar) y se repinta solo si la respuesta trae algo distinto.
+export async function tarjetaConexiones(el, ctx, waFresco) {
   const c = await leerConexiones();
   const m = location.hash.match(/conexion=whatsapp&(ok=1|error=([^&]*))/);
   if (m) { history.replaceState(null, '', location.pathname + location.search); aviso(m[2] ? 'WhatsApp: ' + decodeURIComponent(m[2]) : 'WhatsApp Business conectado'); }
-  const wa = await estadoWA();
+  const wa = waFresco !== undefined ? waFresco : await db.ajuste('waEstado', null);
+  if (waFresco === undefined) estadoWA().then((n) => { if (n !== undefined && el.isConnected && JSON.stringify(n) !== JSON.stringify(wa)) tarjetaConexiones(el, ctx, n); });
   CONEXIONES.wabusiness = {
     nombre: 'WhatsApp Business automático', icono: 'whatsapp',
     resumen: 'Tus agentes de IA leen y responden los WhatsApp de tus clientes.',

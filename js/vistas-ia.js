@@ -239,9 +239,9 @@ export async function ajustes(el, ctx) {
 
     <div class="tarjeta"><div class="fila entre"><h2>Etapas del embudo</h2><span class="fila">${sec.etapas ? `<button class="btn fant peq" id="b-etapas-sector">Las de mi sector</button>` : ''}<button class="btn peq" id="b-etapa">${icono('mas')}Añadir</button></span></div>
       <p class="tenue">Ponlas en el orden de tu proceso de venta. «Ganada» y «Perdida» cierran la oportunidad.</p>
-      <div class="pila" id="etapas">${etapas.map((e, i) => `<div class="fila" data-i="${i}" style="flex-wrap:nowrap">
+      <div class="pila" id="etapas">${etapas.map((e, i) => `<div class="fila" data-i="${i}" style="flex-wrap:wrap;row-gap:8px">
         <input type="color" value="${esc(e.color)}" data-k="color" style="width:36px;height:36px;padding:2px;border:0;background:none">
-        <input class="entrada crece" value="${esc(e.nombre)}" data-k="nombre">
+        <input class="entrada crece" value="${esc(e.nombre)}" data-k="nombre" style="flex:1 1 150px;min-width:0">
         <select class="entrada" data-k="tipo" style="width:auto">${[['abierta', 'Abierta'], ['ganada', 'Ganada'], ['perdida', 'Perdida']].map(([v, t]) => `<option value="${v}" ${v === e.tipo ? 'selected' : ''}>${t}</option>`).join('')}</select>
         <button class="btn fant ico peq" data-sube aria-label="Subir">↑</button><button class="btn fant ico peq peligro" data-quita aria-label="Quitar">${icono('x')}</button></div>`).join('')}</div>
       <div class="fila" style="margin-top:12px"><button class="btn prim" id="b-etapas">Guardar etapas</button></div></div>
