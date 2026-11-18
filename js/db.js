@@ -18,8 +18,24 @@ function abrir() {
         if (['tratos', 'tareas', 'actividades', 'ventas'].includes(t)) almacen.createIndex('contacto', 'contacto');
       }
     };
-    pet.onsuccess = () => ok(pet.result);
+    pet.onsuccess = () => {
+      const db = pet.result;
+      // Si otra pestaña trae una versión nueva del CRM, esta cede la base de datos y se recarga con la versión nueva
+      db.onversionchange = () => { db.close(); conexion = null; location.reload(); };
+      document.getElementById('db-bloqueada')?.remove();
+      ok(db);
+    };
     pet.onerror = () => mal(pet.error);
+    // Otra pestaña con una versión antigua tiene la base de datos abierta: avisar en vez de quedarse en blanco
+    pet.onblocked = () => {
+      if (document.getElementById('db-bloqueada')) return;
+      const aviso = document.createElement('p');
+      aviso.id = 'db-bloqueada';
+      aviso.setAttribute('role', 'alert');
+      aviso.style.cssText = 'position:fixed;inset:auto 16px 90px;z-index:99;margin:0;padding:14px 16px;border-radius:12px;background:#1d2a3d;color:#fff;font:500 14px/1.45 system-ui,sans-serif;box-shadow:0 8px 30px rgba(0,0,0,.35)';
+      aviso.textContent = 'CRM HUGLE está abierto en otra pestaña o ventana con una versión anterior. Ciérrala y esta se abrirá sola.';
+      document.body.append(aviso);
+    };
   });
   return conexion;
 }

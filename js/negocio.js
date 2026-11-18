@@ -173,7 +173,7 @@ export const PLANTILLAS_INICIALES = [
 export async function cargarEjemplo() {
   const ahora = Date.now();
   const haceDias = (n) => new Date(ahora - n * 864e5).toISOString();
-  const enDias = (n) => new Date(ahora + n * 864e5).toISOString().slice(0, 10);
+  const enDias = (n) => new Date(ahora + n * 864e5 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   const personas = [
     ['Lucía Martín', 'Estudio Martín', 'Web', 'Madrid', 2], ['Javier Ortega', '', 'WhatsApp', 'Valencia', 40],
     ['Marta Ruiz', 'Clínica Dental Ruiz', 'Recomendación', 'Sevilla', 5], ['Carlos Pérez', 'Talleres Pérez', 'Anuncio', 'Zaragoza', 12],

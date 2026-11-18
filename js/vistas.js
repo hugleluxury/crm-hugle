@@ -366,8 +366,8 @@ export function editarTrato(ctx, t = null, cid = null, etapa = null) {
 export async function agenda(el, ctx) {
   const d = ctx.datos;
   const hoy = hoyISO();
-  const manana = new Date(Date.now() + 864e5).toISOString().slice(0, 10);
-  const semana = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+  const manana = new Date(Date.now() + 864e5 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10); // día local, no UTC
+  const semana = new Date(Date.now() + 7 * 864e5 - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10);
   const pend = d.tareas.filter((t) => !t.hecha).sort((a, b) => (String(a.vence || '9') + (a.hora || '')).localeCompare(String(b.vence || '9') + (b.hora || '')));
   const grupos = [
     ['Vencidas', pend.filter((t) => t.vence && t.vence < hoy), 'rojo'],

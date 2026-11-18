@@ -11,7 +11,7 @@ import { pedirJSON, lista as iaLista } from './ia.js';
 import { dinero, fecha, hace, dias, hoyISO } from './util.js';
 import { SEGMENTOS, pendientesDeHoy, resultados } from './negocio.js';
 import { SECTORES, sectorActual } from './sectores.js';
-import { clasificar, buscarConocimiento, fichaTexto, siguientePaso, mensajePorPlantilla } from './herramientas-ia.js';
+import { clasificar, buscarConocimiento, fichaTexto, siguientePaso, mensajePorPlantilla, redactar } from './herramientas-ia.js';
 
 export const AGENTES = {
   ventas: { nombre: 'Hermes', rol: 'Agente de ventas', color: '#4285F4', icono: 'embudo', foco: 'Embudo, leads sin respuesta, presupuestos y previsión de ventas.' },
@@ -277,6 +277,22 @@ async function resolver(yo, s, t, original, d, delegar) {
       if (h.nota) partes.push(h.nota);
       await db.guardar('habilidades', { ...h, usos: (h.usos || 0) + 1, ultimoUso: new Date().toISOString() });
       return { texto: `«${h.nombre}»\n\n${partes.join('\n\n')}`, acciones, habilidad: 'propia', propia: h.id, fuente: 'habilidad' };
+    }
+  }
+  // 3b. «Escríbeme / redacta un mensaje para X»: redactarlo (antes de que «seguimiento» lo confunda con el informe de leads)
+  if (!/\?|^(que|cuando|cuantos?|como|donde|quien|le|les|ha|he|has|han|hay|ya)\b/.test(t.trim())
+    && /^(por favor,? )?(escribe(me|le)?|redacta(me|le)?|prepara(me|le)?|hazme|manda(me|le)?|envia(me|le)?|quiero|necesito)\b(\s+\S+){0,3}?\s+(mensaje|whatsapp|email|correo)\b/.test(t.trim())) {
+    const c = contactoEn(original, d);
+    if (c) {
+      const objetivo = /\b(gracias|agradec\w*)\b/.test(t) ? 'gracias' : /\b(cita|llamada|llamar(le)?|reunion|quedar)\b/.test(t) ? 'cita'
+        : /\b(cobr\w*|pago|pagar|factura)\b/.test(t) ? 'cobro' : /\b(oferta|novedad\w*|promo\w*|descuento)\b/.test(t) ? 'oferta'
+        : /\b(retomar|reactivar)\b|hace (mucho )?tiempo/.test(t) ? 'reactivar' : 'seguimiento';
+      const canal = /(email|correo)/.test(t) ? 'email' : 'whatsapp';
+      let m;
+      try { m = await redactar({ contacto: c, d, objetivo, canal, usarIA: iaLista() }); }
+      catch { m = { texto: await mensajePorPlantilla({ contacto: c, d, objetivo, canal }), origen: 'plantilla' }; }
+      return { texto: `Te propongo este mensaje para ${c.nombre} (${canal === 'email' ? 'email' : 'WhatsApp'}). Cópialo o cámbialo; yo no lo envío:\n\n${m.texto}`,
+        habilidad: 'redactar', contacto: c, fuente: m.origen === 'ia' ? 'ia' : 'reglas', acciones: yaTieneTarea(d, c) ? [] : [tarea(`Enviar mensaje a ${c.nombre}`, c)] };
     }
   }
   // 4. Habilidades de fábrica: primero las propias del agente, luego las de sus compañeros (delegación)

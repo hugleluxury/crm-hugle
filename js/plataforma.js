@@ -167,7 +167,7 @@ export async function recogerWhatsApp(cargar) {
       if (!c) c = await db.guardar('contactos', { nombre: m.nombre || (m.telefono ? '+' + m.telefono.replace(/^\+/, '') : 'Cliente de WhatsApp'), telefono: m.telefono || '', origen: 'WhatsApp', etiquetas: ['whatsapp'] });
       await registrar(c.id, 'mensaje', `WhatsApp recibido: ${m.texto}`, m.fecha);
       const r = await clasificar(m.texto, c);
-      const accion = { tipo: 'whatsapp', titulo: `Responder a ${c.nombre}: «${r.respuesta.slice(0, 90)}${r.respuesta.length > 90 ? '…' : ''}»`, texto: r.respuesta, conversacion: m.conversacion, contacto: c.id, vence: new Date().toISOString().slice(0, 10) };
+      const accion = { tipo: 'whatsapp', titulo: `Responder a ${c.nombre}: «${r.respuesta.slice(0, 90)}${r.respuesta.length > 90 ? '…' : ''}»`, texto: r.respuesta, conversacion: m.conversacion, contacto: c.id, vence: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 10) };
       let enviada = false;
       if (auto && !['queja', 'baja'].includes(r.intencion)) { try { await aplicarAccion(accion); accion.hecha = true; enviada = true; } catch {} }
       await db.guardar('bandeja', { agente: 'atencion', titulo: `WhatsApp de ${c.nombre} · ${r.nombre}`, texto: `«${m.texto}»\n\n${enviada ? 'Gaia ha respondido' : 'Gaia propone responder'}: ${r.respuesta}`, acciones: [accion], fecha: new Date().toISOString(), leida: false, origen: 'whatsapp' });
