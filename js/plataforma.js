@@ -77,7 +77,7 @@ function pantallaAcceso(error = '') {
     <p class="tenue">Para usarlo necesitas una cuenta HUGLE gratuita. Créala o entra en tu <b>Control Center</b> y vuelve aquí con un clic. Tus clientes se quedan siempre en este dispositivo.</p>
     ${error ? `<div class="aviso">${error.replace(/[<>&]/g, '')}</div>` : ''}
     <a class="btn grad grande" href="${urlPanel()}">Crear cuenta gratis o entrar</a>
-    <small class="tenue">Te llevará a oficina-hugle.pages.dev</small>
+    <small class="tenue">Te llevará a tu Control Center</small>
   </div>`;
   document.body.append(capa);
   return new Promise(() => {}); // la app no arranca: el usuario sale al Control Center

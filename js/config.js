@@ -3,7 +3,7 @@
 // La cuenta solo sirve para entrar: tus clientes siguen guardados únicamente en tu dispositivo.
 export const PLATAFORMA = {
   api: 'https://hgl-api.hugleluxury.workers.dev',
-  panel: 'https://oficina-hugle.pages.dev/cuenta',
+  panel: 'https://oficina-hugle-web.hugleluxury.workers.dev/cuenta',
   requiereCuenta: true,
   diasSinConexion: 30, // días que el CRM funciona sin internet antes de volver a comprobar la cuenta
 };
