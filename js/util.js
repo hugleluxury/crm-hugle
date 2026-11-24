@@ -163,7 +163,7 @@ export function enlaceCorreo(email, { asunto = '', cuerpo = '' } = {}) {
 }
 
 // Calendario: archivo .ics (Google Calendar, iPhone/Mac, Outlook) a partir de tareas con fecha.
-export function archivoICS(eventos, nombre = 'CRM HUGLE') {
+export function archivoICS(eventos, nombre = 'CRM HUGLE', firma = '') {
   const l = (s) => String(s || '').replace(/[\\;,]/g, (c) => '\\' + c).replace(/\n/g, '\\n');
   const sello = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
   const filas = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//HUGLE//CRM HUGLE//ES', 'CALSCALE:GREGORIAN', `X-WR-CALNAME:${l(nombre)}`];
@@ -181,7 +181,8 @@ export function archivoICS(eventos, nombre = 'CRM HUGLE') {
       filas.push(`DTSTART;VALUE=DATE:${dia}`, `DTEND;VALUE=DATE:${sig.getFullYear()}${String(sig.getMonth() + 1).padStart(2, '0')}${String(sig.getDate()).padStart(2, '0')}`);
     }
     filas.push(`SUMMARY:${l(ev.titulo)}`);
-    if (ev.nota) filas.push(`DESCRIPTION:${l(ev.nota)}`);
+    const desc = [ev.nota, firma].filter(Boolean).join('\n\n');
+    if (desc) filas.push(`DESCRIPTION:${l(desc)}`);
     filas.push('BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:${l(ev.titulo)}`, 'TRIGGER:-PT15M', 'END:VALARM', 'END:VEVENT');
   }
   filas.push('END:VCALENDAR');

@@ -7,7 +7,7 @@ import { alCambiarIA, encender, enCache, estadoIA, instalar } from './ia.js';
 import { aplicarConexiones } from './conexiones.js';
 import * as V from './vistas.js';
 import * as VIA from './vistas-ia.js';
-import { comprobarAcceso, recogerOrdenes, recogerWhatsApp } from './plataforma.js';
+import { comprobarAcceso, recogerOrdenes, recogerWhatsApp, marcaVisible, URL_HUGLE } from './plataforma.js';
 import { revisarRutinas } from './agentes.js';
 import { ofrecerInstalar } from './instalar-app.js';
 
@@ -52,6 +52,11 @@ async function pintar() {
     $$('[data-ir]').forEach((a) => a.classList.toggle('activo', a.dataset.ir === activa));
     const vista = $('#vista');
     await def.pintar(vista, ctx);
+    if (await marcaVisible()) {
+      const f = document.createElement('p'); f.className = 'creado-hugle';
+      f.innerHTML = `<a href="${URL_HUGLE}" target="_blank" rel="noopener">Creado con <b>HUGLE</b> · CRM gratis para tu negocio</a>`;
+      vista.append(f);
+    }
     const n = pendientesDeHoy(ctx.datos).total;
     $('#n-hoy').textContent = n ? String(n) : '';
     contarBandeja();

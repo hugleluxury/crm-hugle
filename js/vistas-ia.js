@@ -8,7 +8,7 @@ import { enviarPlantilla } from './vistas.js';
 import { panelAgentes, panelBandeja, panelJefa } from './vistas-agentes.js';
 import { AGENTES, IDS } from './agentes.js';
 import { SECTORES } from './sectores.js';
-import { cuenta, urlPanel, salir } from './plataforma.js';
+import { cuenta, urlPanel, salir, esDePago } from './plataforma.js';
 import { PLATAFORMA } from './config.js';
 import { tarjetaConexiones } from './conexiones.js';
 
@@ -251,6 +251,8 @@ export async function ajustes(el, ctx) {
     ${PLATAFORMA.requiereCuenta ? `<div class="tarjeta pila"><h2>Tu cuenta HUGLE</h2>
       ${cta ? `<p style="margin:0"><b>${esc(cta.nombre || cta.email)}</b> · ${esc(cta.email)}</p><div class="fila">${['crm', 'studio', 'business'].map((x) => `<span class="etiqueta ${cta.apps.includes(x) ? 'verde' : ''}">${x.toUpperCase()} HUGLE${cta.apps.includes(x) ? '' : ' · sin activar'}</span>`).join('')}</div>` : ''}
       <p class="tenue" style="margin:0">La cuenta solo sirve para entrar y para las apps de pago. Tus clientes no salen de este dispositivo.</p>
+      <label class="fila"><input type="checkbox" id="ocultar-marca" ${a.ocultarMarca === true && esDePago() ? 'checked' : ''} ${esDePago() ? '' : 'disabled'} style="width:18px;height:18px;accent-color:var(--marca)"> Quitar «Creado con HUGLE»</label>
+      <p class="tenue" style="margin:0">${esDePago() ? 'Con ESTUDIO o BUSINESS puedes quitar la firma del CRM y de los calendarios que exportas.' : 'El CRM gratis lleva la firma «Creado con HUGLE». Se quita con ESTUDIO, BUSINESS o el Pack HUGLE.'}</p>
       <div class="fila"><a class="btn" href="${urlPanel()}">Abrir mi Control Center</a><button class="btn fant" id="b-salir">Cerrar sesión</button></div></div>` : ''}
     <div id="con-tarjeta"></div>
     <div id="ia-tarjeta"></div>
@@ -299,6 +301,7 @@ export async function ajustes(el, ctx) {
   $('#b-logo-x', el)?.addEventListener('click', async () => { await db.fijar('logo', ''); await ctx.aplicarMarca(); ctx.pintar(); });
 
   // Cuenta y agentes
+  $('#ocultar-marca', el)?.addEventListener('change', async (e) => { await db.fijar('ocultarMarca', e.target.checked); aviso(e.target.checked ? 'Firma quitada' : 'Firma activada'); });
   $('#b-salir', el)?.addEventListener('click', async () => { if (await confirmar('¿Cerrar sesión en este dispositivo? Tus datos se quedan aquí; para volver a entrar abre el CRM desde tu Control Center.', 'Cerrar sesión')) salir(); });
   $('#f-ag', el).addEventListener('submit', async (e) => {
     e.preventDefault();

@@ -3,7 +3,7 @@
 import * as db from './db.js';
 import { $, esc, icono, aviso, modal, datosForm, descargar, hoyISO, fecha, conexion, enlaceWhatsApp, enlaceCorreo, archivoICS } from './util.js';
 import { importarCSV } from './vistas.js';
-import { conexionesPlataforma, conectarPlataforma, quitarPlataforma } from './plataforma.js';
+import { conexionesPlataforma, conectarPlataforma, quitarPlataforma, marcaVisible, URL_HUGLE } from './plataforma.js';
 
 const PREFIJOS = [['34', 'España (+34)'], ['351', 'Portugal (+351)'], ['52', 'México (+52)'], ['57', 'Colombia (+57)'], ['54', 'Argentina (+54)'], ['56', 'Chile (+56)'], ['51', 'Perú (+51)'], ['593', 'Ecuador (+593)'], ['58', 'Venezuela (+58)'], ['1', 'EE. UU. (+1)'], ['44', 'Reino Unido (+44)'], ['33', 'Francia (+33)'], ['49', 'Alemania (+49)'], ['39', 'Italia (+39)']];
 const VIAS = { app: 'La app de correo del dispositivo', gmail: 'Gmail', outlook: 'Outlook / Hotmail' };
@@ -81,7 +81,7 @@ const CONEXIONES = {
     alAbrir: (d, ctx) => d.querySelector('[data-ics]').addEventListener('click', async () => {
       const nombres = new Map(ctx.datos.contactos.map((x) => [x.id, x.nombre]));
       const ev = ctx.datos.tareas.filter((t) => !t.hecha && t.vence && t.vence >= hoyISO()).map((t) => ({ id: t.id, fecha: t.vence, hora: t.hora, titulo: t.titulo + (nombres.get(t.contacto) ? ` · ${nombres.get(t.contacto)}` : ''), nota: t.notas || '' }));
-      descargar(`crm-hugle-calendario-${hoyISO()}.ics`, archivoICS(ev, (await db.ajuste('negocio')) || 'CRM HUGLE'), 'text/calendar;charset=utf-8');
+      descargar(`crm-hugle-calendario-${hoyISO()}.ics`, archivoICS(ev, (await db.ajuste('negocio')) || 'CRM HUGLE', (await marcaVisible()) ? `Creado con CRM HUGLE (gratis): ${URL_HUGLE}` : ''), 'text/calendar;charset=utf-8');
       await guardar('calendario', { ultima: new Date().toISOString() });
       aviso(`${ev.length} tareas en el archivo de calendario`);
     }),

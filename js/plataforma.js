@@ -18,6 +18,11 @@ export function alCambiarCuenta(f) { oyentes.add(f); return () => oyentes.delete
 const avisar = () => { for (const f of oyentes) f(cuenta()); };
 
 export const cuenta = () => leer()?.cuenta || null;
+
+// «Creado con HUGLE» (24-11-2026): el CRM gratis lleva la firma con enlace; con ESTUDIO o BUSINESS se puede quitar en Ajustes.
+export const URL_HUGLE = 'https://oficina-hugle-web.hugleluxury.workers.dev/?utm_source=crm-hugle&utm_medium=creado-con&utm_campaign=marca';
+export const esDePago = () => !!(cuenta()?.apps?.includes('studio') || cuenta()?.apps?.includes('business'));
+export async function marcaVisible() { return !(esDePago() && (await db.ajuste('ocultarMarca', false)) === true); }
 export const tieneApp = (app) => !!cuenta()?.apps?.includes(app);
 export const urlPanel = (extra = '') => `${PLATAFORMA.panel}?app=crm&volver=${encodeURIComponent(location.origin + location.pathname)}${extra}`;
 
